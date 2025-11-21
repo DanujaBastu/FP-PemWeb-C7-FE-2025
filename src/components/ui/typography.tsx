@@ -37,7 +37,7 @@ export function Typography({
     case "h2":
       return (
         <h2
-          className={`scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0 ${className}`}
+          className={`scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight ${className}`}
         >
           {children}
         </h2>
@@ -59,10 +59,10 @@ export function Typography({
         </h4>
       );
     case "p":
-      return <p className={`not-first:mt-6 ${className}`}>{children}</p>;
+      return <p className={`not-first:mt-2yp ${className}`}>{children}</p>;
     case "blockquote":
       return (
-        <blockquote className={`mt-6 border-l-2 pl-6 italic ${className}`}>
+        <blockquote className={`mt-2 border-l-2 pl-2 italic ${className}`}>
           {children}
         </blockquote>
       );
@@ -73,12 +73,10 @@ export function Typography({
         </p>
       );
     case "large":
-      return (
-        <div className={`text-lg font-semibold ${className}`}>{children}</div>
-      );
+      return <div className={`text-lg ${className}`}>{children}</div>;
     case "small":
       return (
-        <small className={`text-sm leading-none font-medium ${className}`}>
+        <small className={`text-sm leading-none ${className}`}>
           {children}
         </small>
       );
@@ -91,7 +89,7 @@ export function Typography({
     case "inlineCode":
       return (
         <code
-          className={`bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold ${className}`}
+          className={`bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm ${className}`}
         >
           {children}
         </code>

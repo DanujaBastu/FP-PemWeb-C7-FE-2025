@@ -28,7 +28,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-[#B8D4FF] to-[#FFEEB2] p-4">
+    <div className="flex min-h-screen w-full items-center justify-center bg-linear-to-br from-[#B8D4FF] to-[#FFEEB2] p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="items-center pt-8">
           <Avatar className="mx-auto size-16">
