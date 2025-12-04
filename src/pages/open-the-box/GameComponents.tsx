@@ -1,195 +1,209 @@
+// PATH: src/pages/open-the-box/GameComponents.tsx
 import { Button } from "@/components/ui/button";
-// FIX: Menambahkan 'type' agar TypeScript tidak error saat compile
-import { motion, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Lock, Check, Settings, Play, RotateCcw } from "lucide-react";
 
-// --- Tipe Data ---
-export interface Answer {
-  answer_text: string;
-  is_correct: boolean;
-}
-
-export interface Question {
+export interface BoxContent {
   id: string | number;
-  question_text: string;
-  question_image: string | null;
-  answers: Answer[];
+  text: string;
+  options: string[];
+  answer: string;
 }
+
+export type BoxStatus = "closed" | "correct" | "wrong";
 
 interface BoxProps {
   index: number;
-  questionId: string | number;
-  status: "closed" | "opened" | "completed";
+  status: BoxStatus;
+  text: string;
   onClick: () => void;
 }
 
-// --- 1. Komponen Kotak (Grid Item) ---
-export const BoxItem = ({ index, questionId, status, onClick }: BoxProps) => {
-  // Sembunyikan jika sudah selesai
-  if (status === "completed") {
-    return <div className="invisible aspect-square" />;
-  }
-
+// --- 1. KOMPONEN KOTAK (GRID) ---
+export const BoxItem = ({ index, status, text, onClick }: BoxProps) => {
   return (
-    <div className="aspect-square w-full h-full relative perspective-1000">
+    <div className="relative w-full h-full perspective-1000 group">
       <motion.div
-        layoutId={`box-${questionId}`}
-        onClick={onClick}
-        initial={false}
+        // Event Handler
+        onClick={status === "closed" ? onClick : undefined}
+        // Animasi Putar Kartu (Parent)
         animate={{
-          opacity: status === "opened" ? 0 : 1,
-          scale: status === "closed" ? 1 : 0.8,
+          rotateY: status === "correct" ? 180 : 0,
         }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
         className={cn(
-          "cursor-pointer w-full h-full absolute inset-0 rounded-xl",
-          // Gaya Peti Kayu
-          "bg-gradient-to-br from-amber-700 via-amber-800 to-amber-950",
-          "border-[4px] border-amber-900/50 shadow-[inset_0_2px_10px_rgba(255,255,255,0.2),0_8px_16px_rgba(0,0,0,0.4)]",
-          "flex items-center justify-center overflow-hidden z-10",
-          status === "closed" ? "hover:brightness-110" : "",
+          "w-full aspect-square rounded-2xl shadow-2xl transition-all flex flex-col items-center justify-center relative overflow-hidden border-[3px]",
+          // Styles
+          status === "closed" &&
+            "bg-slate-900 border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:border-cyan-400 cursor-pointer hover:scale-[1.02]",
+          status === "correct" &&
+            "bg-emerald-800 border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.5)] cursor-default",
+          status === "wrong" &&
+            "bg-slate-800 border-red-600 shadow-none cursor-not-allowed",
         )}
       >
-        {/* Tekstur Kayu */}
-        <div
-          className="absolute inset-0 opacity-30 mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] bg-repeat"
-          style={{ backgroundSize: "200px" }}
-        ></div>
-        {/* Garis-garis papan */}
-        <div className="absolute inset-0 flex flex-col justify-between py-4 pointer-events-none opacity-20">
-          <div className="h-0.5 bg-amber-950 w-full"></div>
-          <div className="h-0.5 bg-amber-950 w-full"></div>
-        </div>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none"></div>
 
-        {/* Angka */}
-        <motion.span
-          layoutId={`number-${questionId}`}
-          className="text-4xl md:text-6xl font-black text-amber-100 drop-shadow-[0_3px_3px_rgba(0,0,0,0.8)] z-20 font-mono"
-        >
-          {index + 1}
-        </motion.span>
+        {/* --- STATE 1: TERTUTUP (Closed) --- */}
+        {status === "closed" && (
+          <div className="z-10 flex flex-col items-center pointer-events-none">
+            <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center mb-2 border border-cyan-500/50 shadow-inner">
+              <span className="text-2xl font-black text-cyan-400 font-mono">
+                {index + 1}
+              </span>
+            </div>
+            <div className="text-[10px] text-cyan-500/80 tracking-[0.2em] uppercase font-bold">
+              Open Me
+            </div>
+          </div>
+        )}
+
+        {/* --- STATE 2: BENAR (Correct) --- */}
+        {status === "correct" && (
+          // [FIX UTAMA] transform: rotateY(180deg) DI SINI.
+          // Ini wajib ada untuk memutar balik teks agar tidak seperti cermin.
+          <div
+            className="w-full h-full flex flex-col items-center justify-center z-10 p-2 text-center"
+            style={{ transform: "rotateY(180deg)" }}
+          >
+            <div className="text-xl font-black text-white leading-tight mb-2 drop-shadow-md">
+              {text}
+            </div>
+            <div className="bg-emerald-500 p-1.5 rounded-full shadow-lg">
+              <Check className="w-6 h-6 text-white" strokeWidth={4} />
+            </div>
+          </div>
+        )}
+
+        {/* --- STATE 3: SALAH (Wrong/Locked) --- */}
+        {status === "wrong" && (
+          <div className="z-10 flex flex-col items-center animate-in fade-in zoom-in duration-300">
+            <div className="bg-red-900/30 p-3 rounded-full border border-red-500/50 mb-2">
+              <Lock className="w-8 h-8 text-red-500" />
+            </div>
+            <span className="text-xs font-bold text-red-500 uppercase tracking-widest">
+              LOCKED
+            </span>
+          </div>
+        )}
       </motion.div>
-
-      {/* Bayangan Lantai */}
-      <div className="absolute bottom-0 left-2 right-2 h-4 bg-black/30 blur-md rounded-[50%] translate-y-2 -z-10"></div>
     </div>
   );
 };
 
-// --- 2. Komponen Modal Pertanyaan (Surat Terbuka) ---
+// --- 2. MODAL SOAL (NO ANIMATION - STABILITY FIRST) ---
 interface QuestionModalProps {
-  question: Question;
-  onAnswer: (isCorrect: boolean) => void;
-  onClose: () => void;
+  content: BoxContent;
+  timeLeft: number;
+  onAnswer: (text: string) => void;
 }
 
-const contentVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: 0.3,
-      duration: 0.4,
-      ease: "easeOut",
-      staggerChildren: 0.1,
-    },
-  },
-  exit: { opacity: 0, y: -20, transition: { duration: 0.2 } },
-};
-
 export const QuestionModal = ({
-  question,
+  content,
+  timeLeft,
   onAnswer,
-  onClose,
 }: QuestionModalProps) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-    >
-      <motion.div
-        layoutId={`box-${question.id}`}
-        onClick={(e) => e.stopPropagation()}
-        className={cn(
-          "w-full max-w-3xl relative overflow-hidden shadow-2xl rounded-2xl",
-          "bg-[#fffbf0] border-2 border-[#e8dfc8]",
-        )}
-        transition={{ type: "spring", damping: 25, stiffness: 120 }}
-        style={{ transformOrigin: "center center" }}
-      >
-        <div className="absolute top-0 left-0 right-0 h-2 bg-[repeating-linear-gradient(45deg,#e8dfc8,#e8dfc8_10px,#fffbf0_10px,#fffbf0_20px)] opacity-50"></div>
+  if (!content) return null;
 
-        {/* Header Surat */}
-        <div className="bg-blue-600/90 p-5 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-          <motion.h2
-            layoutId={`number-${question.id}`}
-            className="text-2xl md:text-3xl font-bold text-white tracking-wide relative z-10"
+  return (
+    // [FIX] Menggunakan div biasa (bukan motion.div) untuk container utama
+    // z-index: 9999 agar selalu paling atas
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/95 p-4"
+      style={{ zIndex: 9999 }}
+    >
+      {/* Kartu Soal */}
+      <div className="relative bg-slate-900 rounded-3xl w-full max-w-3xl shadow-2xl flex flex-col md:flex-row min-h-[400px] border border-slate-600 ring-1 ring-cyan-500/50 overflow-hidden">
+        {/* KIRI: SOAL */}
+        <div className="md:w-5/12 bg-gradient-to-br from-violet-900 to-slate-900 flex flex-col items-center justify-center p-8 text-white text-center border-b md:border-b-0 md:border-r border-slate-600 relative">
+          <h3 className="text-violet-300 text-xs font-bold tracking-[0.2em] uppercase mb-4">
+            Translate This
+          </h3>
+
+          <div className="text-7xl md:text-8xl font-black text-white drop-shadow-[0_0_25px_rgba(139,92,246,0.8)] mb-6">
+            {content.text}
+          </div>
+
+          <div
+            className={cn(
+              "flex items-center gap-2 px-5 py-2 rounded-full font-mono font-bold text-lg border shadow-lg transition-colors",
+              timeLeft <= 10
+                ? "bg-red-500/20 border-red-500 text-red-400"
+                : "bg-slate-800 border-slate-600 text-cyan-300",
+            )}
           >
-            Pertanyaan
-          </motion.h2>
+            <span>⏳</span>
+            <span>{timeLeft}s Left</span>
+          </div>
         </div>
 
-        {/* Konten */}
-        <motion.div
-          variants={contentVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          className="p-6 md:p-8 flex flex-col items-center gap-6 relative z-10"
-        >
-          {question.question_image && (
-            <motion.img
-              variants={contentVariants}
-              src={
-                import.meta.env.VITE_API_URL
-                  ? `${import.meta.env.VITE_API_URL}/${question.question_image}`
-                  : question.question_image
-              }
-              alt="Question"
-              className="max-h-52 object-contain rounded-lg border-2 border-slate-200 shadow-md bg-white p-1"
-            />
-          )}
-
-          <motion.p
-            variants={contentVariants}
-            className="text-xl md:text-3xl text-center font-bold text-slate-800 leading-relaxed font-serif"
-          >
-            {question.question_text}
-          </motion.p>
-
-          <motion.div
-            variants={contentVariants}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mt-4"
-          >
-            {question.answers.map((ans, idx) => (
-              <Button
+        {/* KANAN: OPSI */}
+        <div className="md:w-7/12 p-8 flex flex-col justify-center bg-slate-950 gap-4">
+          <h4 className="text-slate-400 font-medium text-center mb-2">
+            Select the correct answer:
+          </h4>
+          <div className="grid gap-3">
+            {content.options.map((opt, idx) => (
+              <button
                 key={idx}
-                variant="outline"
-                className="h-auto py-4 px-6 text-lg md:text-xl font-medium border-2 border-slate-300 hover:bg-blue-50 hover:border-blue-400 text-slate-700 transition-colors whitespace-normal rounded-xl flex items-center justify-start group bg-white"
-                onClick={() => onAnswer(ans.is_correct)}
+                onClick={() => onAnswer(opt)}
+                className="w-full py-4 px-6 text-lg font-bold text-slate-300 bg-slate-900 border border-slate-700 rounded-xl hover:bg-violet-600 hover:border-violet-500 hover:text-white hover:scale-[1.01] active:scale-[0.98] transition-all text-left flex justify-between items-center group shadow-md"
               >
-                <div className="bg-slate-100 group-hover:bg-blue-100 text-slate-600 group-hover:text-blue-600 font-bold w-10 h-10 flex items-center justify-center rounded-full mr-4 shrink-0 transition-colors border border-slate-200">
-                  {String.fromCharCode(65 + idx)}
-                </div>
-                <span className="text-left group-hover:text-blue-800 transition-colors">
-                  {ans.answer_text}
-                </span>
-              </Button>
+                <span>{opt}</span>
+                <div className="w-3 h-3 rounded-full bg-slate-700 group-hover:bg-white transition-colors"></div>
+              </button>
             ))}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-        {/* Lipatan kertas pojok kanan bawah */}
-        <div
-          className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-slate-200/50 to-transparent pointer-events-none"
-          style={{ clipPath: "polygon(100% 0, 0% 100%, 100% 100%)" }}
-        ></div>
-      </motion.div>
-    </motion.div>
+// --- 3. MODAL SETTINGS (NO ANIMATION - STABILITY FIRST) ---
+interface SettingsModalProps {
+  onResume: () => void;
+  onRestart: () => void;
+}
+
+export const SettingsModal = ({ onResume, onRestart }: SettingsModalProps) => {
+  return (
+    // [FIX] Menggunakan div biasa, z-index 9999
+    <div
+      onClick={onResume}
+      className="fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      style={{ zIndex: 9999 }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-900 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center border border-slate-500 ring-4 ring-black"
+      >
+        <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 ring-2 ring-slate-600">
+          <Settings className="w-8 h-8 text-slate-300 animate-spin-slow" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">Game Paused</h2>
+        <p className="text-slate-400 text-sm mb-8">
+          Game stopped. Ready to continue?
+        </p>
+
+        <div className="space-y-4">
+          <Button
+            onClick={onResume}
+            className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-6 text-lg font-bold shadow-lg shadow-cyan-900/50"
+          >
+            <Play className="w-5 h-5 mr-2 fill-current" /> Resume
+          </Button>
+          <Button
+            onClick={onRestart}
+            variant="outline"
+            className="w-full py-6 text-lg border-slate-600 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-white"
+          >
+            <RotateCcw className="w-5 h-5 mr-2" /> Restart Game
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
