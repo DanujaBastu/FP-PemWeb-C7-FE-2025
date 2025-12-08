@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 // --- PERBAIKAN DI SINI ---
 // Kita tulis langsung alamat Backend-nya agar tidak salah alamat lagi
 const api: AxiosInstance = axios.create({
-  baseURL: "http://localhost:4000/api", // <--- PENTING! JANGAN UBAH INI
+  baseURL: "http://localhost:3000/api", // <--- PENTING! JANGAN UBAH INI
   timeout: 10000,
 });
 
