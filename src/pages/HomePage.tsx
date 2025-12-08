@@ -38,11 +38,13 @@ type Game = {
   name: string;
   description: string;
   thumbnail_image: string | null;
-  game_template: string;
+  game_template_name: string;
+  game_template_slug: string;
   total_liked: number;
   total_played: number;
   creator_id: string;
   creator_name: string;
+  is_game_liked: boolean;
   is_liked?: boolean;
 };
 
@@ -110,7 +112,7 @@ export default function HomePage() {
                 ...g,
                 total_liked: g.total_liked || 0,
                 total_played: g.total_played || 0,
-                is_liked: g.is_liked || false,
+                is_liked: g.is_game_liked || false,
               }) as Game,
           ),
         );
@@ -184,7 +186,7 @@ export default function HomePage() {
 
   const GameCard = ({ game }: { game: Game }) => {
     const handlePlayGame = () => {
-      window.location.href = `/${game.game_template}/play/${game.id}`;
+      window.location.href = `/${game.game_template_slug}/play/${game.id}`;
     };
 
     return (
@@ -213,7 +215,7 @@ export default function HomePage() {
               {game.name}
             </Typography>
             <Badge variant="secondary" className="shrink-0">
-              {game.game_template.replace(/-/g, " ").toUpperCase()}
+              {game.game_template_name}
             </Badge>
           </div>
 
@@ -232,7 +234,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               {isAuthenticated ? (
                 <div
-                  className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                  className="flex items-center gap-1 cursor-pointer hover:scale-105 transition-transform ease-in-out duration-150"
                   onClick={(e) => handleLike(e, game.id)}
                 >
                   <img

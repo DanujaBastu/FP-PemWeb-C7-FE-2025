@@ -14,6 +14,10 @@ import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
 import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
 import ProtectedRoute from "./routes/ProtectedRoutes";
 
+// 📌 TAMBAHAN 1: Import Komponen Game Pair or No Pair
+import PairOrNoPairGame from "./pages/pair-or-no-pair";
+import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
+
 function App() {
   return (
     <>
@@ -24,6 +28,10 @@ function App() {
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />
+        <Route
+          path="/pair-or-no-pair/play/:gameId"
+          element={<PairOrNoPairGame />}
+        />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />
@@ -33,6 +41,10 @@ function App() {
           <Route
             path="/create-speed-sorting"
             element={<CreateSpeedSorting />}
+          />
+          <Route
+            path="/create-pair-or-no-pair"
+            element={<CreatePairOrNoPair />}
           />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
           <Route
