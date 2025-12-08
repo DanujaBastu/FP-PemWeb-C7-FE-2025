@@ -1,13 +1,7 @@
-// PATH: src/pages/open-the-box/index.tsx
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  Trophy,
-  Settings as SettingsIcon,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, Trophy, Pause, Sparkles } from "lucide-react";
 import {
   BoxItem,
   QuestionModal,
@@ -24,7 +18,21 @@ export default function OpenTheBoxGame() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // --- STATE ---
+  const correctSfx = useRef(new Audio("/sound/Correct.wav"));
+  const wrongSfx = useRef(new Audio("/sound/wrong.MP3"));
+  const tickSfx = useRef(new Audio("/sound/Tiktok.MP3"));
+
+  const playSound = (audioRef: React.MutableRefObject<HTMLAudioElement>) => {
+    audioRef.current.currentTime = 0;
+    audioRef.current.volume = 0.5;
+    audioRef.current.play().catch((e) => console.log("Audio play failed:", e));
+  };
+
+  const stopSound = (audioRef: React.MutableRefObject<HTMLAudioElement>) => {
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+  };
+
   const [items, setItems] = useState<BoxContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [gameTitle, setGameTitle] = useState("");
@@ -41,7 +49,6 @@ export default function OpenTheBoxGame() {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // 1. FETCH & RANDOMIZE DATA
   useEffect(() => {
     const fetchGame = async () => {
       if (!id) return;
@@ -61,7 +68,6 @@ export default function OpenTheBoxGame() {
             }),
           );
 
-          // Logic: Acak dan ambil 10 soal
           const shuffled = [...allItems].sort(() => 0.5 - Math.random());
           const selectedItems = shuffled.slice(0, 10);
 
@@ -78,11 +84,13 @@ export default function OpenTheBoxGame() {
     fetchGame();
   }, [id]);
 
-  // 2. LOGIKA TIMER
   useEffect(() => {
     if (!loading && !isGameOver && !isSettingsOpen && isTimerRunning) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
+          if (prev === 10) {
+            playSound(tickSfx);
+          }
           if (prev <= 1) {
             handleGameOver();
             return 0;
@@ -96,9 +104,7 @@ export default function OpenTheBoxGame() {
     };
   }, [loading, isGameOver, isSettingsOpen, isTimerRunning]);
 
-  // 3. HANDLERS
   const handleBoxClick = (index: number) => {
-    // Hanya bisa diklik jika kotak tertutup dan game belum selesai
     if (boxStatus[index] === "closed" && !isGameOver) {
       setActiveItemIndex(index);
       setIsTimerRunning(true);
@@ -111,18 +117,26 @@ export default function OpenTheBoxGame() {
     const isCorrect = answerText === currentItem.answer;
     const newStatus = [...boxStatus];
 
+    stopSound(tickSfx);
+
     if (isCorrect) {
+      playSound(correctSfx);
+
       newStatus[activeItemIndex] = "correct";
       setScore((p) => p + 100);
       setCorrectCount((p) => p + 1);
+
       setTimeLeft(30);
+
       setIsTimerRunning(false);
       setActiveItemIndex(null);
     } else {
+      playSound(wrongSfx);
+
       newStatus[activeItemIndex] = "wrong";
-      // Tidak mengubah waktu, hanya menutup modal
       setActiveItemIndex(null);
     }
+
     setBoxStatus(newStatus);
     if (newStatus.every((s) => s !== "closed")) handleGameOver();
   };
@@ -144,7 +158,6 @@ export default function OpenTheBoxGame() {
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
-  // --- RENDER LOADING ---
   if (loading)
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-cyan-500 font-mono font-bold tracking-widest">
@@ -152,7 +165,6 @@ export default function OpenTheBoxGame() {
       </div>
     );
 
-  // --- RENDER GAME OVER ---
   if (isGameOver) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
@@ -188,11 +200,8 @@ export default function OpenTheBoxGame() {
     );
   }
 
-  // --- RENDER MAIN GAMEPLAY ---
   return (
-    // Container Utama: Flex Center Vertikal (items-center) & Horizontal (justify-center)
     <div className="min-h-screen font-sans flex flex-col relative bg-[#0B0F19] text-slate-100 overflow-hidden">
-      {/* Background Effects */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-40 pointer-events-none z-0"></div>
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-900/20 blur-[120px] rounded-full pointer-events-none z-0"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-900/20 blur-[120px] rounded-full pointer-events-none z-0"></div>
@@ -201,8 +210,6 @@ export default function OpenTheBoxGame() {
         <SettingsModal onResume={handleResume} onRestart={handleRestart} />
       )}
 
-      {/* --- HUD HEADER --- */}
-      {/* Z-Index 20 agar lebih rendah dari Modal (Z-100) */}
       <div className="absolute top-0 left-0 w-full pt-6 px-6 flex justify-between items-start z-20">
         <Button
           variant="ghost"
@@ -229,7 +236,6 @@ export default function OpenTheBoxGame() {
         </div>
       </div>
 
-      {/* --- MODAL SOAL --- */}
       {activeItemIndex !== null && (
         <QuestionModal
           content={items[activeItemIndex]}
@@ -238,9 +244,7 @@ export default function OpenTheBoxGame() {
         />
       )}
 
-      {/* --- GRID CONTAINER (VERTICAL CENTER) --- */}
       <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-4 w-full h-full">
-        {/* JUDUL SCORE (DI ATAS GRID) */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-2">
             <Sparkles className="w-4 h-4 text-yellow-400" />
@@ -253,7 +257,6 @@ export default function OpenTheBoxGame() {
           </div>
         </div>
 
-        {/* GRID KOTAK 5x2 */}
         <div className="w-full max-w-6xl">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
             {items.map((item, index) => (
@@ -270,15 +273,14 @@ export default function OpenTheBoxGame() {
         </div>
       </div>
 
-      {/* --- TOMBOL SETTINGS (POJOK KIRI BAWAH) --- */}
       <div className="fixed bottom-6 left-6 z-40">
         <Button
           size="icon"
           onClick={handleOpenSettings}
-          className="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-600 text-slate-400 hover:text-white hover:bg-slate-700 hover:border-white shadow-xl transition-all"
-          title="Settings"
+          className="w-14 h-14 rounded-full bg-slate-800 border-2 border-slate-600 text-slate-400 hover:text-white hover:bg-slate-700 hover:border-white shadow-xl transition-all active:scale-95"
+          title="Pause Game"
         >
-          <SettingsIcon className="h-6 w-6" />
+          <Pause className="h-6 w-6 fill-current" />
         </Button>
       </div>
     </div>
