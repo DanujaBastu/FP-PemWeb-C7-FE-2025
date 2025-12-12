@@ -19,7 +19,7 @@ import ProtectedRoute from "./routes/ProtectedRoutes";
 import CreateAnagram from "./pages/Anagram/CreateAnagram";
 import PlayAnagram from "./pages/Anagram/PlayAnagram";
 import EditAnagram from "./pages/Anagram/EditAnagram";
-//  TAMBAHAN 1: Import Komponen Game Pair or No Pair
+// 📌 TAMBAHAN 1: Import Komponen Game Pair or No Pair
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
 
