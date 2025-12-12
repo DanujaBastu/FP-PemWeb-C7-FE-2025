@@ -51,10 +51,12 @@ export default function OpenTheBoxGame() {
   const [items, setItems] = useState<BoxContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [gameTitle, setGameTitle] = useState("");
+
   const [boxStatus, setBoxStatus] = useState<BoxStatus[]>([]);
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
+
   const [timeLeft, setTimeLeft] = useState(30);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -66,7 +68,7 @@ export default function OpenTheBoxGame() {
 
   // --- AUDIO SETTINGS ---
   useEffect(() => {
-    // FIX: Copy ref.current to variable to satisfy linter
+    // FIX: Simpan ref ke variabel lokal agar lint aman
     const vibing = vibingSfx.current;
     const chill = chillSfx.current;
     const tick = tickSfx.current;
@@ -91,7 +93,7 @@ export default function OpenTheBoxGame() {
 
   // --- LOGIC AUDIO ---
   useEffect(() => {
-    // FIX: Copy ref.current to variable to satisfy linter
+    // FIX: Simpan ref ke variabel lokal agar lint aman
     const vibing = vibingSfx.current;
     const chill = chillSfx.current;
     const tick = tickSfx.current;
@@ -134,6 +136,7 @@ export default function OpenTheBoxGame() {
         const res = await api.get(`/game/game-list/open-the-box/${id}`);
         let targetData = res.data?.data || res.data;
         if (!targetData.game_json) targetData = res.data;
+
         if (targetData && targetData.game_json) {
           setGameTitle(targetData.name);
           const allItems = targetData.game_json.items.map(
@@ -196,6 +199,7 @@ export default function OpenTheBoxGame() {
     const currentItem = items[activeItemIndex];
     const isCorrect = answerText === currentItem.answer;
     const newStatus = [...boxStatus];
+
     if (isCorrect) {
       playOneShot(correctSfx);
       newStatus[activeItemIndex] = "correct";
@@ -236,14 +240,18 @@ export default function OpenTheBoxGame() {
   return (
     <div className={isDarkMode ? "dark" : ""}>
       <div className="min-h-screen font-sans flex flex-col relative bg-[#F3F1E8] dark:bg-black text-stone-800 dark:text-stone-200 overflow-hidden transition-colors duration-500">
+        {/* Background Patterns - UPDATED: Gold Theme for Dark Mode */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-10 dark:opacity-30 pointer-events-none z-0"></div>
+        {/* Amber/Gold Blobs instead of Violet/Cyan */}
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-amber-200/40 dark:bg-amber-900/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-yellow-200/40 dark:bg-yellow-900/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
+        {/* MODAL SETTINGS */}
         {isSettingsOpen && (
           <SettingsModal onResume={handleResume} onRestart={handleRestart} />
         )}
 
+        {/* GAME OVER SCREEN */}
         {isGameOver && (
           <div className="fixed inset-0 z-50 bg-stone-100/50 dark:bg-black/90 backdrop-blur flex items-center justify-center p-4">
             <div className="bg-[#F3F1E8] dark:bg-[#1a1a1a] border border-stone-300 dark:border-amber-900/50 p-10 rounded-xl text-center max-w-md w-full shadow-2xl relative overflow-hidden">
@@ -281,6 +289,7 @@ export default function OpenTheBoxGame() {
           </div>
         )}
 
+        {/* START SCREEN */}
         {!isGameStarted && (
           <div className="fixed inset-0 z-50 bg-[#F3F1E8]/90 dark:bg-black/90 backdrop-blur flex items-center justify-center p-4">
             <div className="text-center">
@@ -297,6 +306,7 @@ export default function OpenTheBoxGame() {
           </div>
         )}
 
+        {/* MODAL SOAL */}
         {activeItemIndex !== null && (
           <QuestionModal
             content={items[activeItemIndex]}
@@ -305,6 +315,7 @@ export default function OpenTheBoxGame() {
           />
         )}
 
+        {/* HEADER - UPDATED ALIGNMENT */}
         <div className="absolute top-0 left-0 w-full pt-4 px-4 md:pt-6 md:px-6 flex justify-between items-start z-20">
           <Button
             variant="ghost"
@@ -313,7 +324,12 @@ export default function OpenTheBoxGame() {
           >
             <ArrowLeft className="mr-2 h-5 w-5" /> Back
           </Button>
+
+          {/* KANAN: Theme + Timer (Alignment Fixed) */}
           <div className="flex items-end gap-3">
+            {" "}
+            {/* items-end agar tombol sejajar bawah dengan kotak timer */}
+            {/* Tombol Theme diperkecil agar proporsional */}
             <Button
               onClick={toggleTheme}
               size="icon"
@@ -325,6 +341,7 @@ export default function OpenTheBoxGame() {
                 <Sun className="w-5 h-5 text-amber-600" />
               )}
             </Button>
+            {/* Timer Display */}
             <div className="flex flex-col items-end gap-1">
               <div className="text-[10px] font-bold tracking-widest text-stone-400 dark:text-stone-500 uppercase">
                 Time Left
@@ -343,16 +360,22 @@ export default function OpenTheBoxGame() {
           </div>
         </div>
 
+        {/* MAIN CONTENT - HEADLINE REDESIGN */}
         <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-4 w-full h-full pt-20 md:pt-0 pb-20 md:pb-0">
           <div className="text-center mb-8">
-            <h1 className="text-2xl md:text-4xl font-serif font-bold text-stone-800 dark:text-amber-100 uppercase tracking-widest mb-2 drop-shadow-md">
+            {/* Judul: Serif, Besar, Gold Theme */}
+            <h1 className="text-xl md:text-3xl font-serif font-bold text-stone-800 dark:text-amber-100 uppercase tracking-widest mb-2 drop-shadow-md">
               {gameTitle || "Loading..."}
             </h1>
+
+            {/* Garis Pemisah Mistis */}
             <div className="flex items-center justify-center gap-4 mb-4 opacity-50">
               <div className="h-[1px] w-12 bg-stone-400 dark:bg-amber-700"></div>
               <Sparkles className="w-4 h-4 text-amber-500" />
               <div className="h-[1px] w-12 bg-stone-400 dark:bg-amber-700"></div>
             </div>
+
+            {/* Score: Lebih Kecil & Minimalis */}
             <div className="text-xl font-mono font-medium text-stone-500 dark:text-stone-400">
               SCORE:{" "}
               <span className="text-stone-800 dark:text-amber-400 font-bold">
@@ -360,6 +383,7 @@ export default function OpenTheBoxGame() {
               </span>
             </div>
           </div>
+
           <div className="w-full max-w-5xl">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-6">
               {items.map((item, index) => (
@@ -376,6 +400,7 @@ export default function OpenTheBoxGame() {
           </div>
         </div>
 
+        {/* PAUSE BUTTON */}
         <div className="fixed bottom-6 left-6 z-40">
           <Button
             size="icon"
