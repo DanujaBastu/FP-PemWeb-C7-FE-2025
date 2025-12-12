@@ -1,8 +1,7 @@
-// PATH: src/pages/open-the-box/GameComponents.tsx
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Lock, Check, Settings, Play, RotateCcw } from "lucide-react";
+import { Lock, Check, Settings } from "lucide-react";
 
 export interface BoxContent {
   id: string | number;
@@ -21,10 +20,11 @@ interface BoxProps {
   layoutId?: string;
 }
 
+// --- KOMPONEN KARTU (BOX ITEM) FINAL FIX (LINT PASSED) ---
 export const BoxItem = ({
-  index,
+  // index, // HAPUS: Tidak dipakai, bikin error lint
   status,
-  text,
+  // text,  // HAPUS: Tidak dipakai, bikin error lint
   onClick,
   layoutId,
 }: BoxProps) => {
@@ -37,86 +37,89 @@ export const BoxItem = ({
         layoutId={layoutId}
         onClick={isClickable ? onClick : undefined}
         whileTap={isClickable ? { scale: 0.95 } : {}}
-        whileHover={isClickable ? { y: -5, zIndex: 20 } : {}}
         animate={{
-          rotateY: status === "correct" ? 180 : 0,
+          rotateY: 0,
           x: status === "wrong" ? [0, -10, 10, -10, 10, 0] : 0,
-          scale: status === "correct" ? [1, 1.05, 1] : 1,
+          scale: status === "correct" ? 1.05 : 1,
           boxShadow:
             status === "correct"
-              ? "0 0 40px rgba(52,211,153,0.6)"
+              ? "0 0 40px rgba(16, 185, 129, 0.5)"
               : status === "wrong"
-                ? "0 0 0px rgba(0,0,0,0)"
-                : "0 0 15px rgba(6,182,212,0.3)",
+                ? "0 0 30px rgba(185, 28, 28, 0.5)"
+                : "0 10px 20px rgba(0,0,0,0.3)",
         }}
         transition={{
-          layout: { duration: 0.4, ease: "easeInOut" },
-          rotateY: { type: "spring", stiffness: 200, damping: 20 },
-          x: { duration: 0.4, ease: "easeInOut" },
-          scale: { duration: 0.5 },
-          boxShadow: { duration: 0.5 },
+          duration: 0.3,
+          x: { type: "spring", stiffness: 400, damping: 15 },
         }}
         className={cn(
-          "w-full aspect-square rounded-2xl shadow-2xl transition-colors flex flex-col items-center justify-center relative overflow-hidden border-[3px] bg-slate-900",
-          status === "closed" && "border-cyan-500/50 cursor-pointer",
-          status === "correct" &&
-            "bg-emerald-800 border-emerald-400 cursor-default",
-          status === "wrong" &&
-            "bg-slate-800 border-red-600 cursor-not-allowed",
+          "w-full aspect-square rounded-xl relative overflow-hidden transition-all shadow-xl",
+          "bg-black",
+          status === "closed" ? "border-2 border-amber-800/40" : "border-0",
         )}
       >
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none"></div>
-
         <AnimatePresence mode="wait">
+          {/* A. TAMPILAN TERTUTUP */}
           {status === "closed" && (
             <motion.div
               key="closed"
+              className="absolute inset-0 w-full h-full"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="z-10 flex flex-col items-center pointer-events-none"
+              exit={{ opacity: 0, duration: 0.1 }}
             >
-              <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center mb-2 border border-cyan-500/50 shadow-inner">
-                <span className="text-2xl font-black text-cyan-400 font-mono">
-                  {index + 1}
-                </span>
-              </div>
-              <div className="text-[10px] text-cyan-500/80 tracking-[0.2em] uppercase font-bold">
-                Open Me
+              <div
+                className={cn(
+                  "absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-all duration-500 ease-out",
+                  "scale-110",
+                  "bg-[url('/images/card-light-sq.png')] dark:bg-[url('/images/card-dark-sq.png')]",
+                  "group-hover:blur-[4px] group-hover:brightness-[0.4]",
+                )}
+              />
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none">
+                <div className="opacity-0 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out text-xl font-serif font-extrabold tracking-[0.3em] text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                  OPEN
+                </div>
               </div>
             </motion.div>
           )}
 
+          {/* B. TAMPILAN BENAR */}
           {status === "correct" && (
             <motion.div
               key="correct"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="w-full h-full flex flex-col items-center justify-center z-10 p-2 text-center"
-              style={{ transform: "rotateY(180deg)" }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#10B981] dark:bg-[#059669] cursor-default"
             >
-              <div className="text-xl font-black text-white leading-tight mb-2 drop-shadow-md">
-                {text}
+              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-2 backdrop-blur-sm shadow-inner">
+                <Check className="w-8 h-8 text-white" strokeWidth={4} />
               </div>
-              <div className="bg-emerald-500 p-1.5 rounded-full shadow-lg">
-                <Check className="w-6 h-6 text-white" strokeWidth={4} />
+              <div className="text-xl font-bold text-white tracking-widest uppercase drop-shadow-md font-sans">
+                DIVINE
+              </div>
+              <div className="text-white/80 text-[10px] font-bold tracking-wider mt-1">
+                FATE UNLOCKED
               </div>
             </motion.div>
           )}
 
+          {/* C. TAMPILAN SALAH */}
           {status === "wrong" && (
             <motion.div
               key="wrong"
-              initial={{ opacity: 0, scale: 0.5 }}
+              initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="z-10 flex flex-col items-center"
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#DC2626] dark:bg-[#991B1B] cursor-not-allowed"
             >
-              <div className="bg-red-900/30 p-3 rounded-full border border-red-500/50 mb-2">
-                <Lock className="w-8 h-8 text-red-500" />
+              <div className="w-14 h-14 rounded-full border-[3px] border-white/30 flex items-center justify-center mb-2 bg-black/10 shadow-inner">
+                <Lock className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-xs font-bold text-red-500 uppercase tracking-widest">
+              <div className="text-xl font-bold text-white tracking-widest uppercase drop-shadow-md font-sans">
                 LOCKED
-              </span>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -125,6 +128,7 @@ export const BoxItem = ({
   );
 };
 
+// --- MODAL SOAL ---
 interface QuestionModalProps {
   content: BoxContent;
   timeLeft: number;
@@ -143,55 +147,62 @@ export const QuestionModal = ({
   const progress = timeLeft / 30;
   const dashOffset = circumference - progress * circumference;
   const isUrgent = timeLeft <= 10;
-  const timerColor = isUrgent ? "text-red-500" : "text-cyan-400";
+
+  const timerColor = isUrgent
+    ? "text-red-500"
+    : "text-stone-700 dark:text-amber-100";
+  const ringColor = isUrgent
+    ? "stroke-red-500"
+    : "stroke-stone-700 dark:stroke-amber-500";
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
       style={{ zIndex: 9999 }}
     >
       <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
+        exit={{ scale: 0.9, opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative bg-slate-900 rounded-3xl w-full max-w-3xl shadow-2xl flex flex-col md:flex-row min-h-[400px] border border-slate-600 ring-1 ring-cyan-500/50 overflow-hidden"
+        className="relative bg-[#F3F1E8] dark:bg-[#1a1a1a] rounded-xl w-full max-w-3xl shadow-2xl flex flex-col md:flex-row min-h-[400px] border border-stone-300 dark:border-amber-900/40 overflow-hidden"
       >
         <div className="absolute top-4 right-4 z-20 flex items-center justify-center pointer-events-none">
           <div className="relative w-16 h-16 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90 drop-shadow-lg">
+            <svg className="w-full h-full transform -rotate-90">
               <circle
                 cx="32"
                 cy="32"
                 r={radius}
                 stroke="currentColor"
-                strokeWidth="4"
+                strokeWidth="3"
                 fill="transparent"
-                className="text-slate-800"
+                className="text-stone-300 dark:text-stone-800"
               />
               <motion.circle
                 cx="32"
                 cy="32"
                 r={radius}
                 stroke="currentColor"
-                strokeWidth="4"
-                fill="rgba(15, 23, 42, 0.8)"
+                strokeWidth="3"
+                fill="currentColor"
                 strokeLinecap="round"
-                className={cn("transition-colors duration-300", timerColor)}
+                className={cn(
+                  "transition-colors duration-300 fill-[#F3F1E8] dark:fill-[#1a1a1a]",
+                  ringColor,
+                )}
                 initial={{ strokeDashoffset: 0 }}
                 animate={{ strokeDashoffset: dashOffset }}
                 transition={{ duration: 1, ease: "linear" }}
-                style={{
-                  strokeDasharray: circumference,
-                }}
+                style={{ strokeDasharray: circumference }}
               />
             </svg>
             <div
               className={cn(
-                "absolute text-lg font-black font-mono",
+                "absolute text-lg font-serif font-bold",
                 timerColor,
               )}
             >
@@ -200,28 +211,27 @@ export const QuestionModal = ({
           </div>
         </div>
 
-        <div className="md:w-5/12 bg-gradient-to-br from-violet-900 to-slate-900 flex flex-col items-center justify-center p-8 text-white text-center border-b md:border-b-0 md:border-r border-slate-600 relative">
-          <h2 className="text-violet-300 text-3xl font-bold tracking-[0.2em] uppercase mb-4">
-            Question
+        <div className="md:w-5/12 bg-gradient-to-br from-stone-200 to-stone-300 dark:from-black dark:to-[#111] flex flex-col items-center justify-center p-8 text-center border-b md:border-b-0 md:border-r border-stone-300 dark:border-amber-900/30 relative">
+          <h2 className="text-stone-500 dark:text-amber-700 text-sm font-bold tracking-[0.3em] uppercase mb-6 font-serif">
+            The Riddle
           </h2>
-          <div className="text-6xl md:text-7xl font-black text-white drop-shadow-[0_0_25px_rgba(139,92,246,0.8)] leading-tight">
+          <div className="text-5xl md:text-6xl font-serif text-stone-800 dark:text-amber-100 drop-shadow-sm leading-tight">
             {content.text}
           </div>
         </div>
 
-        <div className="md:w-7/12 p-8 pt-16 md:pt-8 flex flex-col justify-center bg-slate-950 gap-4 relative">
-          <h4 className="text-slate-400 font-medium text-center mb-2">
-            Select the correct answer:
+        <div className="md:w-7/12 p-6 md:p-8 pt-16 md:pt-8 flex flex-col justify-center bg-[#FDFBF7] dark:bg-[#141414] gap-3 md:gap-4 relative">
+          <h4 className="text-stone-400 text-sm font-medium text-center mb-4 font-serif italic tracking-wider">
+            Choose your fate
           </h4>
           <div className="grid gap-3">
             {content.options.map((opt, idx) => (
               <button
                 key={idx}
                 onClick={() => onAnswer(opt)}
-                className="w-full py-4 px-6 text-lg font-bold text-slate-300 bg-slate-900 border border-slate-700 rounded-xl hover:bg-violet-600 hover:border-violet-500 hover:text-white hover:scale-[1.01] active:scale-[0.98] transition-all text-left flex justify-between items-center group shadow-md"
+                className="w-full py-4 px-6 text-lg font-serif text-stone-600 dark:text-stone-400 bg-white dark:bg-[#1a1a1a] border border-stone-300 dark:border-stone-800 rounded-lg hover:border-amber-500 dark:hover:border-amber-600 hover:text-amber-700 dark:hover:text-amber-100 hover:bg-amber-50 dark:hover:bg-black transition-all text-center tracking-wide group shadow-sm"
               >
-                <span>{opt}</span>
-                <div className="w-3 h-3 rounded-full bg-slate-700 group-hover:bg-white transition-colors"></div>
+                {opt}
               </button>
             ))}
           </div>
@@ -231,6 +241,7 @@ export const QuestionModal = ({
   );
 };
 
+// --- SETTINGS MODAL ---
 interface SettingsModalProps {
   onResume: () => void;
   onRestart: () => void;
@@ -245,29 +256,27 @@ export const SettingsModal = ({ onResume, onRestart }: SettingsModalProps) => {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-slate-900 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center border border-slate-500 ring-4 ring-black"
+        className="bg-[#F3F1E8] dark:bg-[#1a1a1a] p-8 rounded-xl shadow-2xl max-w-sm w-full text-center border border-stone-300 dark:border-stone-800"
       >
-        <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 ring-2 ring-slate-600">
-          <Settings className="w-8 h-8 text-slate-300 animate-spin-slow" />
+        <div className="w-16 h-16 bg-white dark:bg-black rounded-full flex items-center justify-center mx-auto mb-6 border border-stone-300 dark:border-stone-800">
+          <Settings className="w-6 h-6 text-stone-400 animate-spin-slow" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Game Paused</h2>
-        <p className="text-slate-400 text-sm mb-8">
-          Game stopped. Ready to continue?
-        </p>
-
-        <div className="space-y-4">
+        <h2 className="text-xl font-serif text-stone-800 dark:text-white mb-2 tracking-widest uppercase">
+          Paused
+        </h2>
+        <div className="space-y-4 mt-8">
           <Button
             onClick={onResume}
-            className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-6 text-lg font-bold shadow-lg shadow-cyan-900/50"
+            className="w-full bg-stone-800 hover:bg-stone-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white py-6 text-lg font-serif tracking-wider"
           >
-            <Play className="w-5 h-5 mr-2 fill-current" /> Resume
+            RESUME
           </Button>
           <Button
             onClick={onRestart}
             variant="outline"
-            className="w-full py-6 text-lg border-slate-600 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-white"
+            className="w-full py-6 text-lg border-stone-300 dark:border-stone-700 text-stone-500 dark:text-stone-400 hover:text-red-600 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 font-serif tracking-wider"
           >
-            <RotateCcw className="w-5 h-5 mr-2" /> Restart Game
+            RESTART
           </Button>
         </div>
       </div>
