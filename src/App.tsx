@@ -14,13 +14,16 @@ import EditTypeTheAnswer from "./pages/EditTypeTheAnswer";
 import CreateSpeedSorting from "./pages/speed-sorting/CreateSpeedSorting";
 import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
 import ProtectedRoute from "./routes/ProtectedRoutes";
-import OpenTheBoxGame from "./pages/open-the-box";
 import CreateAnagram from "./pages/Anagram/CreateAnagram";
 import PlayAnagram from "./pages/Anagram/PlayAnagram";
 import EditAnagram from "./pages/Anagram/EditAnagram";
 import MazeChase from "./pages/maze-chase/MazeChase";
 import CreateMazeChase from "./pages/maze-chase/CreateMazeChase";
 import EditMazeChase from "./pages/maze-chase/EditMazeChase";
+
+import OpenTheBoxGame from "./pages/open-the-box";
+import CreateOpenTheBox from "./pages/open-the-box/createOpenTheBox"; 
+import EditOpenTheBox from "./pages/open-the-box/editOpenTheBox";
 
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
@@ -47,6 +50,8 @@ function App() {
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
         <Route path="/open-the-box/play/:id" element={<OpenTheBoxGame />} />
+        <Route path="/create-open-the-box" element={<CreateOpenTheBox />} />
+        <Route path="/edit-open-the-box/:id" element={<EditOpenTheBox />} />
         <Route path="/type-the-answer/play/:id" element={<TypeTheAnswer />} />
         <Route path="/maze-chase/play/:id" element={<MazeChase />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />
