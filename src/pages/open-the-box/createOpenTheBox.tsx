@@ -103,6 +103,7 @@ function CreateOpenTheBox() {
 
   // --- LOGIC QUESTIONS ---
   const addQuestion = () => {
+    if (questions.length >= 10) return toast.error("Maksimal 10 pertanyaan");
     setQuestions((prev) => [
       ...prev,
       {
@@ -186,6 +187,9 @@ function CreateOpenTheBox() {
     // 1. Validasi Frontend
     if (!title) return toast.error("Judul wajib diisi");
     if (!thumbnail) return toast.error("Thumbnail wajib diupload");
+    if (questions.length === 0)
+      return toast.error("Minimal harus ada 1 pertanyaan");
+    if (questions.length > 10) return toast.error("Maksimal 10 pertanyaan");
 
     setIsSubmitting(true);
 

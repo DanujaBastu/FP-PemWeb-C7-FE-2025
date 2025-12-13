@@ -134,7 +134,12 @@ export default function OpenTheBoxGame() {
     const fetchGame = async () => {
       if (!id) return;
       try {
-        const res = await api.get(`/api/game/game-list/open-the-box/${id}`);
+        setLoading(true);
+        // Add timestamp to prevent cache
+        const timestamp = Date.now();
+        const res = await api.get(
+          `/api/game/game-type/open-the-box/${id}?t=${timestamp}`,
+        );
         let targetData = res.data?.data || res.data;
         if (!targetData.game_json) targetData = res.data;
 
@@ -405,9 +410,21 @@ export default function OpenTheBoxGame() {
           </div>
 
           <div className="w-full max-w-5xl">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-6">
+            <div
+              className={`grid gap-3 md:gap-6 place-items-center ${
+                items.length <= 2
+                  ? "grid-cols-1 md:grid-cols-2"
+                  : items.length <= 4
+                    ? "grid-cols-2 md:grid-cols-2"
+                    : items.length <= 6
+                      ? "grid-cols-2 md:grid-cols-3"
+                      : items.length <= 8
+                        ? "grid-cols-2 md:grid-cols-4"
+                        : "grid-cols-2 md:grid-cols-5"
+              }`}
+            >
               {items.map((item, index) => (
-                <div key={item.id} className="w-full">
+                <div key={item.id} className="w-full max-w-[200px]">
                   <BoxItem
                     index={index}
                     text={item.text}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom"; // Import useParams untuk ambil ID dari URL
+import toast from "react-hot-toast";
 import {
   Trash2,
   Plus,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import api from "@/api/axios";
 
 // --- TIPE DATA (Sama) ---
 interface Answer {
@@ -38,44 +40,61 @@ const EditOpenTheBox = () => {
 
   // --- FETCH DATA SAAT KOMPONEN DIMUAT ---
   useEffect(() => {
-    // Simulasi Fetch Data dari API
     const fetchGameData = async () => {
       setIsLoading(true);
       try {
-        // const response = await api.get(`/games/${id}`);
-        // const data = response.data;
+        console.log("Fetching game data for ID:", id);
+        const response = await api.get(
+          `/api/game/game-type/open-the-box/${id}`,
+        );
+        console.log("API Response:", response);
+        console.log("Response data:", response.data);
 
-        // --- MOCK DATA (Ganti dengan API Call nanti) ---
-        // Pura-puranya ini data dari database untuk game "Open The Box"
-        const mockData = {
-          title: "English Numbers Challenge", // Contoh judul dari screenshot Anda
-          items: [
-            {
-              id: "q1",
-              question: "What comes after Two?",
-              answers: [
-                { id: "a1", text: "Three", isCorrect: true },
-                { id: "a2", text: "Four", isCorrect: false },
-              ],
-            },
-            {
-              id: "q2",
-              question: "Translation of 'Sepuluh'",
-              answers: [
-                { id: "a3", text: "Ten", isCorrect: true },
-                { id: "a4", text: "Twenty", isCorrect: false },
-              ],
-            },
-          ],
-        };
+        const game = response.data.data;
+        console.log("Game object:", game);
 
-        // Set State
-        setTitle(mockData.title);
-        setItems(mockData.items);
+        if (!game) {
+          throw new Error("Game data not found in response");
+        }
+
+        // Parse gameData
+        const gameData = game.game_json;
+        console.log("Game JSON:", gameData);
+
+        if (!gameData || !gameData.items) {
+          console.error("Invalid game data structure:", gameData);
+          throw new Error("Invalid game data structure - missing items");
+        }
+
+        const items = gameData.items.map(
+          (item: Record<string, unknown>, idx: number) => {
+            console.log(`Processing item ${idx}:`, item);
+            return {
+              id: `q${idx + 1}`,
+              question: item.text || "",
+              answers: item.options
+                ? (item.options as string[]).map(
+                    (opt: string, aIdx: number) => ({
+                      id: `a${idx + 1}${aIdx + 1}`,
+                      text: opt,
+                      isCorrect: opt === item.answer,
+                    }),
+                  )
+                : [],
+            };
+          },
+        );
+
+        console.log("Parsed items:", items);
+
+        setTitle(game.name || "");
+        setItems(items);
       } catch (error) {
-        console.error("Error fetching game data", error);
-        alert("Could not load game data.");
-        navigate("/"); // Redirect jika error
+        console.error("Error fetching game data:", error);
+        alert(
+          `Could not load game data: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+        navigate("/my-projects");
       } finally {
         setIsLoading(false);
       }
@@ -86,10 +105,8 @@ const EditOpenTheBox = () => {
     }
   }, [id, navigate]);
 
-  // --- LOGIC HELPER SAMA PERSIS DENGAN CREATE ---
-  // (Anda bisa memindahkan logika ini ke custom hook useGameEditor Logic agar tidak duplikat kode)
-
   const addQuestion = () => {
+    if (items.length >= 10) return toast.error("Maksimal 10 pertanyaan");
     setItems([
       ...items,
       {
@@ -102,10 +119,7 @@ const EditOpenTheBox = () => {
       },
     ]);
   };
-  // ... (Paste fungsi removeQuestion, duplicateQuestion, moveQuestion, handleQuestionChange di sini) ...
-  // ... (Paste fungsi addAnswer, removeAnswer, handleAnswerChange, toggleCorrect di sini) ...
-  // Agar kode tidak terlalu panjang di sini, saya asumsikan Anda menyalin fungsi-fungsi
-  // manipulasi state yang SAMA PERSIS dari createOpenTheBox.tsx
+
   const removeQuestion = (index: number) => {
     if (items.length <= 1) return;
     const newItems = [...items];
@@ -179,20 +193,36 @@ const EditOpenTheBox = () => {
       alert("Please enter an activity title.");
       return;
     }
+    if (items.length === 0) {
+      alert("Minimal harus ada 1 pertanyaan");
+      return;
+    }
+    if (items.length > 10) {
+      alert("Maksimal 10 pertanyaan");
+      return;
+    }
 
-    const payload = {
-      id, // Kirim ID game yang diedit
-      title,
-      type: "OpenTheBox",
-      content: items,
+    // Prepare data sesuai dengan backend schema
+    const gameData = {
+      items: items.map((q, idx) => ({
+        id: idx + 1,
+        text: q.question,
+        options: q.answers.map((a) => a.text),
+        answer: q.answers.find((a) => a.isCorrect)?.text || q.answers[0].text,
+      })),
+      settings: { theme: "default" },
     };
 
-    console.log("Updating Data:", payload);
+    const formData = new FormData();
+    formData.append("name", title);
+    formData.append("gameData", JSON.stringify(gameData));
+
+    console.log("Updating Data:", { id, title, gameData });
 
     try {
-      // await api.put(`/games/${id}`, payload); // Panggil API update
+      await api.patch(`/api/game/game-type/open-the-box/${id}`, formData);
       alert("Game Updated Successfully!");
-      navigate("/my-activities"); // Kembali ke dashboard
+      navigate("/my-projects"); // Kembali ke my projects
     } catch (error) {
       console.error("Failed to update game", error);
       alert("Failed to update game.");
@@ -232,11 +262,6 @@ const EditOpenTheBox = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-6">
-        {/* SAMA SEPERTI CREATE: LIST QUESTIONS */}
-        {/* ... (Copy paste bagian render list items dari CreateOpenTheBox di sini) ... */}
-        {/* Agar tidak terlalu panjang, saya persingkat render map-nya.
-            Pada implementasi asli, copy paste seluruh div 'space-y-6' dari file Create di sini.
-        */}
         <div className="space-y-6">
           {items.map((item, qIndex) => (
             <div
