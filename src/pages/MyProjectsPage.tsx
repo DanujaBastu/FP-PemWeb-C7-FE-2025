@@ -32,7 +32,8 @@ type Project = {
   description: string;
   thumbnail_image: string | null;
   is_published: boolean;
-  game_template: number;
+  game_template_name: string;
+  game_template_slug: string;
 };
 
 export default function MyProjectsPage() {
@@ -47,9 +48,8 @@ export default function MyProjectsPage() {
         setLoading(true);
         const response = await api.get("/api/auth/me/game");
         setProjects(response.data.data);
-      } catch (err) {
+      } catch {
         setError("Failed to fetch projects. Please try again later.");
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -57,23 +57,29 @@ export default function MyProjectsPage() {
     fetchProjects();
   }, []);
 
-  const handleDeleteProject = async (projectId: string) => {
+  const handleDeleteProject = async (
+    projectTemplate: string,
+    projectId: string,
+  ) => {
     try {
-      await api.delete(`/api/game/game-type/quiz/${projectId}`);
+      await api.delete(`/api/game/game-type/${projectTemplate}/${projectId}`);
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
       toast.success("Project deleted successfully!");
-    } catch (err) {
-      console.error("Failed to delete project:", err);
+    } catch {
       toast.error("Failed to delete project. Please try again.");
     }
   };
 
-  const handleUpdateStatus = async (gameId: string, isPublish: boolean) => {
+  const handleUpdateStatus = async (
+    projectTemplate: string,
+    gameId: string,
+    isPublish: boolean,
+  ) => {
     try {
       const form = new FormData();
       form.append("is_publish", String(isPublish));
 
-      await api.patch(`/api/game/game-type/quiz/${gameId}`, form);
+      await api.patch(`/api/game/game-type/${projectTemplate}/${gameId}`, form);
 
       setProjects((prev) =>
         prev.map((p) =>
@@ -84,8 +90,7 @@ export default function MyProjectsPage() {
       toast.success(
         isPublish ? "Published successfully" : "Unpublished successfully",
       );
-    } catch (err) {
-      console.error("Failed to update publish status:", err);
+    } catch {
       toast.error("Failed to update status. Please try again.");
     }
   };
@@ -185,7 +190,9 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        navigate(`/quiz/play/${project.id}`);
+                        navigate(
+                          `/${project.game_template_slug}/play/${project.id}`,
+                        );
                       }}
                     >
                       <Play />
@@ -197,7 +204,9 @@ export default function MyProjectsPage() {
                     size="sm"
                     className="h-7"
                     onClick={() => {
-                      navigate(`/quiz/edit/${project.id}`);
+                      navigate(
+                        `/${project.game_template_slug}/edit/${project.id}`,
+                      );
                     }}
                   >
                     <Edit />
@@ -209,7 +218,11 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        handleUpdateStatus(project.id, false);
+                        handleUpdateStatus(
+                          project.game_template_slug,
+                          project.id,
+                          false,
+                        );
                       }}
                     >
                       <EyeOff />
@@ -221,7 +234,11 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        handleUpdateStatus(project.id, true);
+                        handleUpdateStatus(
+                          project.game_template_slug,
+                          project.id,
+                          true,
+                        );
                       }}
                     >
                       <Eye />
@@ -255,7 +272,10 @@ export default function MyProjectsPage() {
                         <AlertDialogAction
                           className="bg-red-600 hover:bg-red-700"
                           onClick={() => {
-                            handleDeleteProject(project.id);
+                            handleDeleteProject(
+                              project.game_template_slug,
+                              project.id,
+                            );
                           }}
                         >
                           Yes, Delete
