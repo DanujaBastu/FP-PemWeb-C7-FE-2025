@@ -14,13 +14,16 @@ import EditTypeTheAnswer from "./pages/EditTypeTheAnswer";
 import CreateSpeedSorting from "./pages/speed-sorting/CreateSpeedSorting";
 import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
 import ProtectedRoute from "./routes/ProtectedRoutes";
-import OpenTheBoxGame from "./pages/open-the-box";
 import CreateAnagram from "./pages/Anagram/CreateAnagram";
 import PlayAnagram from "./pages/Anagram/PlayAnagram";
 import EditAnagram from "./pages/Anagram/EditAnagram";
 import MazeChase from "./pages/maze-chase/MazeChase";
 import CreateMazeChase from "./pages/maze-chase/CreateMazeChase";
 import EditMazeChase from "./pages/maze-chase/EditMazeChase";
+
+import OpenTheBoxGame from "./pages/open-the-box";
+import CreateOpenTheBox from "./pages/open-the-box/createOpenTheBox";
+import EditOpenTheBox from "./pages/open-the-box/editOpenTheBox";
 
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
@@ -30,13 +33,12 @@ import CreateSlidingPuzzle from "./pages/sliding-puzzle/CreateSlidingPuzzle";
 import EditSlidingPuzzle from "./pages/sliding-puzzle/EditSlidingPuzzle";
 import PlaySlidingPuzzle from "./pages/sliding-puzzle/PlaySlidingPuzzle";
 
-// 📌 TAMBAHAN 2: Import Komponen Game Whack-a-Mole
+// Import Komponen Game Whack-a-Mole
 import WhackAMoleGame from "./pages/whack-a-mole";
 import CreateWhackAMole from "./pages/whack-a-mole/create";
 import EditWhackAMole from "./pages/whack-a-mole/edit";
 import TypeTheAnswer from "./pages/TypeTheAnswer";
 import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
-import CreateOpenTheBox from "./pages/open-the-box/createOpenTheBox";
 
 function App() {
   return (
@@ -48,7 +50,10 @@ function App() {
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
         <Route path="/open-the-box/play/:id" element={<OpenTheBoxGame />} />
+
+        {/* RUTE CREATE OPEN THE BOX */}
         <Route path="/create-open-the-box" element={<CreateOpenTheBox />} />
+
         <Route path="/type-the-answer/play/:id" element={<TypeTheAnswer />} />
         <Route path="/maze-chase/play/:id" element={<MazeChase />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />
@@ -68,6 +73,10 @@ function App() {
           <Route path="/my-projects" element={<MyProjectsPage />} />
           <Route path="/create-projects" element={<CreateProject />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
+
+          {/* RUTE EDIT OPEN THE BOX */}
+          <Route path="/open-the-box/edit/:id" element={<EditOpenTheBox />} />
+
           <Route
             path="/create-type-the-answer"
             element={<CreateTypeTheAnswer />}
