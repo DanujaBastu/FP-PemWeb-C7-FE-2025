@@ -1,78 +1,132 @@
-import api from "@/api/axios";
+// PATH: src/api/open-the-box/useCreateOpenTheBox.ts
+
+import axios from "axios";
 import toast from "react-hot-toast";
 
-// --- 1. INTERFACES (Tipe Data) ---
-
-// Interface untuk satu item soal (Sesuai JSON Anda)
-export interface BoxItemPayload {
-  text: string; // Contoh: "10"
-  answer: string; // Contoh: "Ten"
-  options: string[]; // Contoh: ["Ten", "Tin", "Tan"]
+// Type definitions
+export interface Answer {
+  text: string;
+  isCorrect: boolean;
 }
 
-// Interface untuk data yang dikirim dari Form React
-export interface CreateOpenTheBoxPayload {
-  title: string; // Judul Game
-  description?: string; // Deskripsi
-  thumbnail: File | null; // Gambar Cover
+export interface Question {
+  questionText: string;
+  answers: Answer[];
+}
+
+export interface Settings {
   isPublishImmediately: boolean;
-  items: BoxItemPayload[]; // Array soal-soal
+  scorePerQuestion: number;
 }
 
-// --- 2. FUNGSI UTAMA (HOOK) ---
+export interface CreateOpenTheBoxPayload {
+  title: string;
+  description: string;
+  thumbnail: File;
+  questions: Question[];
+  settings: Settings;
+}
 
-export const useCreateOpenTheBox = async (payload: CreateOpenTheBoxPayload) => {
+// API base URL - sesuaikan dengan backend Anda
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
+/**
+ * Hook untuk membuat Open The Box game
+ * Mengirim data menggunakan FormData untuk support file upload
+ */
+export const CreateOpenTheBoxApi = async (payload: CreateOpenTheBoxPayload) => {
   try {
     const formData = new FormData();
 
-    // A. Masukkan Data Metadata Game (Nama, Deskripsi, Gambar)
-    formData.append("name", payload.title);
+    // Append thumbnail file
+    formData.append("thumbnail", payload.thumbnail);
 
-    if (payload.description) {
-      formData.append("description", payload.description);
-    }
-
-    if (payload.thumbnail) {
-      formData.append("thumbnail_image", payload.thumbnail);
-    }
-
-    // Status Publish
-    formData.append(
-      "is_publish_immediately",
-      String(payload.isPublishImmediately),
-    );
-
-    // B. MENYUSUN JSON SESUAI PERMINTAAN ANDA
-    // Kita lakukan mapping untuk menambahkan 'id' secara otomatis
-    const itemsWithId = payload.items.map((item, index) => ({
-      id: index + 1, // Generate ID: 1, 2, 3...
-      text: item.text, // "10"
-      answer: item.answer, // "Ten"
-      options: item.options, // ["Ten", "Tin", "Tan"]
-    }));
-
-    // Bungkus dalam object { items: [...] }
-    const gameJsonStructure = {
-      items: itemsWithId,
-      // Kita bisa tambah settings default jika perlu
-      settings: {
-        theme: "default",
-      },
+    // Append game data sebagai JSON string
+    const gameData = {
+      title: payload.title,
+      description: payload.description,
+      questions: payload.questions,
+      settings: payload.settings,
     };
 
-    // Konversi Object jadi String JSON untuk dikirim ke Backend
-    formData.append("game_json", JSON.stringify(gameJsonStructure));
+    formData.append("gameData", JSON.stringify(gameData));
 
-    // C. Kirim ke API
-    const res = await api.post("/api/game/game-type/open-the-box", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    // Debug log - hapus di production
+    console.log("Sending FormData:");
+    console.log("- Thumbnail:", payload.thumbnail.name, payload.thumbnail.type);
+    console.log("- Game Data:", gameData);
 
-    toast.success("Game Open The Box berhasil dibuat!");
-    return res.data;
-  } catch (err: unknown) {
-    console.error("Gagal membuat game:", err);
-    toast.error("Gagal membuat game. Cek koneksi atau data Anda.");
-    throw err;
+    // Kirim request ke backend
+    const response = await axios.post(
+      `${API_BASE_URL}/api/open-the-box`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 30000, // 30 second timeout
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error creating Open The Box:", error);
+
+    if (axios.isAxiosError(error)) {
+      // Handle specific error responses
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        switch (status) {
+          case 422:
+            toast.error(
+              data.error || "Invalid data format. Please check all fields.",
+            );
+            break;
+          case 413:
+            toast.error("File too large. Please use a smaller image.");
+            break;
+          case 400:
+            toast.error(data.error || "Bad request. Please check your input.");
+            break;
+          case 500:
+            toast.error("Server error. Please try again later.");
+            break;
+          default:
+            toast.error(`Error: ${data.error || "Failed to create game"}`);
+        }
+      } else if (error.request) {
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error("Failed to create game. Please try again.");
+      }
+    } else {
+      toast.error("An unexpected error occurred.");
+    }
+
+    throw error;
   }
 };
+
+// Alternative: Jika ingin gunakan React Hook pattern
+// export const useCreateOpenTheBoxMutation = () => {
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//
+//   const createGame = async (payload: CreateOpenTheBoxPayload) => {
+//     setIsLoading(true);
+//     setError(null);
+//     try {
+//       const result = await useCreateOpenTheBox(payload);
+//       return result;
+//     } catch (err) {
+//       setError(err instanceof Error ? err.message : "Unknown error");
+//       throw err;
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+//
+//   return { createGame, isLoading, error };
+// };

@@ -36,6 +36,7 @@ import CreateWhackAMole from "./pages/whack-a-mole/create";
 import EditWhackAMole from "./pages/whack-a-mole/edit";
 import TypeTheAnswer from "./pages/TypeTheAnswer";
 import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
+import CreateOpenTheBox from "./pages/open-the-box/createOpenTheBox";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
         <Route path="/open-the-box/play/:id" element={<OpenTheBoxGame />} />
+        <Route path="/create-open-the-box" element={<CreateOpenTheBox />} />
         <Route path="/type-the-answer/play/:id" element={<TypeTheAnswer />} />
         <Route path="/maze-chase/play/:id" element={<MazeChase />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />

@@ -1,341 +1,567 @@
+// PATH: src/pages/open-the-box/createOpenTheBox.tsx
+
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
+import { Input } from "@/components/ui/input";
+import { TextareaField } from "@/components/ui/textarea-field";
+import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/ui/form-field";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import Dropzone from "@/components/ui/dropzone";
+import { Typography } from "@/components/ui/typography";
+import { ArrowLeft, Plus, SaveIcon, Trash2, X, EyeIcon } from "lucide-react";
+
 import {
-  Trash2,
-  Plus,
-  Copy,
-  Image as ImageIcon,
-  Mic,
-  Check,
-  X,
-  ArrowUp,
-  ArrowDown,
-} from "lucide-react";
-import { Button } from "@/components/ui/button"; // Asumsi pakai shadcn/ui atau ganti button biasa
-import { Input } from "@/components/ui/input"; // Asumsi pakai shadcn/ui atau ganti input biasa
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
-// --- TIPE DATA ---
-interface Answer {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-}
+// Import dengan type keyword untuk fix TypeScript error
+import {
+  CreateOpenTheBoxApi,
+  type Question,
+} from "@/api/open-the-box/useCreateOpenTheBox";
 
-interface QuestionItem {
-  id: string;
-  question: string;
-  answers: Answer[];
-}
+function CreateOpenTheBox() {
+  const navigate = useNavigate();
 
-// Helper ID unik sederhana
-const generateId = () => Math.random().toString(36).substr(2, 9);
-
-const CreateOpenTheBox = () => {
   // --- STATE ---
-  const [title, setTitle] = useState("Untitled7");
-  const [items, setItems] = useState<QuestionItem[]>([
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+
+  const [questions, setQuestions] = useState<Question[]>([
     {
-      id: generateId(),
-      question: "",
+      questionText: "",
       answers: [
-        { id: generateId(), text: "", isCorrect: true },
-        { id: generateId(), text: "", isCorrect: false },
+        { text: "", isCorrect: true }, // Default opsi 1 benar
+        { text: "", isCorrect: false },
       ],
     },
   ]);
 
-  // --- LOGIC: SOAL (QUESTION) ---
+  const [settings, setSettings] = useState({
+    isPublishImmediately: false,
+    scorePerQuestion: 1,
+  });
 
+  // --- HANDLERS ---
   const addQuestion = () => {
-    setItems([
-      ...items,
+    setQuestions((prev) => [
+      ...prev,
       {
-        id: generateId(),
-        question: "",
+        questionText: "",
         answers: [
-          { id: generateId(), text: "", isCorrect: false },
-          { id: generateId(), text: "", isCorrect: false },
+          { text: "", isCorrect: true },
+          { text: "", isCorrect: false },
         ],
       },
     ]);
   };
 
   const removeQuestion = (index: number) => {
-    if (items.length <= 1) return; // Minimal sisa 1
-    const newItems = [...items];
-    newItems.splice(index, 1);
-    setItems(newItems);
+    if (questions.length === 1) {
+      toast.error("At least one question is required");
+      return;
+    }
+    setQuestions((prev) => prev.filter((_, i) => i !== index));
+    // Clear error untuk question yang dihapus
+    setFormErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[`questions.${index}.questionText`];
+      delete newErrors[`questions.${index}.answers`];
+      return newErrors;
+    });
   };
-
-  const duplicateQuestion = (index: number) => {
-    const itemToCopy = items[index];
-    const newItem = {
-      ...itemToCopy,
-      id: generateId(),
-      answers: itemToCopy.answers.map((a) => ({ ...a, id: generateId() })),
-    };
-    const newItems = [...items];
-    newItems.splice(index + 1, 0, newItem);
-    setItems(newItems);
-  };
-
-  const moveQuestion = (index: number, direction: "up" | "down") => {
-    if (direction === "up" && index === 0) return;
-    if (direction === "down" && index === items.length - 1) return;
-
-    const newItems = [...items];
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    [newItems[index], newItems[targetIndex]] = [
-      newItems[targetIndex],
-      newItems[index],
-    ];
-    setItems(newItems);
-  };
-
-  const handleQuestionChange = (index: number, val: string) => {
-    const newItems = [...items];
-    newItems[index].question = val;
-    setItems(newItems);
-  };
-
-  // --- LOGIC: JAWABAN (ANSWER) ---
 
   const addAnswer = (qIndex: number) => {
-    const newItems = [...items];
-    newItems[qIndex].answers.push({
-      id: generateId(),
-      text: "",
-      isCorrect: false,
-    });
-    setItems(newItems);
+    const newQuestions = [...questions];
+    if (newQuestions[qIndex].answers.length >= 6) {
+      toast.error("Maximum 6 options per question");
+      return;
+    }
+    newQuestions[qIndex].answers.push({ text: "", isCorrect: false });
+    setQuestions(newQuestions);
   };
 
   const removeAnswer = (qIndex: number, aIndex: number) => {
-    const newItems = [...items];
-    // Minimal sisa 1 jawaban (opsional, wordwall biasanya min 1 atau 2)
-    if (newItems[qIndex].answers.length <= 1) return;
-    newItems[qIndex].answers.splice(aIndex, 1);
-    setItems(newItems);
+    const newQuestions = [...questions];
+    if (newQuestions[qIndex].answers.length <= 2) {
+      toast.error("Minimum 2 options per question");
+      return;
+    }
+
+    const isRemovingCorrectAnswer =
+      newQuestions[qIndex].answers[aIndex].isCorrect;
+    newQuestions[qIndex].answers.splice(aIndex, 1);
+
+    // Jika yang dihapus adalah jawaban benar, set opsi pertama jadi benar
+    if (isRemovingCorrectAnswer) {
+      newQuestions[qIndex].answers[0].isCorrect = true;
+    }
+
+    setQuestions(newQuestions);
   };
 
-  const handleAnswerChange = (qIndex: number, aIndex: number, val: string) => {
-    const newItems = [...items];
-    newItems[qIndex].answers[aIndex].text = val;
-    setItems(newItems);
+  const handleAnswerChange = (
+    qIndex: number,
+    aIndex: number,
+    value: string,
+  ) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].answers[aIndex].text = value;
+    setQuestions(newQuestions);
+
+    // Clear error saat user mulai mengisi
+    if (formErrors[`questions.${qIndex}.answers`]) {
+      setFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[`questions.${qIndex}.answers`];
+        return newErrors;
+      });
+    }
   };
 
-  const toggleCorrect = (qIndex: number, aIndex: number) => {
-    const newItems = [...items];
-    // Toggle status (Wordwall membolehkan multiple correct answer)
-    newItems[qIndex].answers[aIndex].isCorrect =
-      !newItems[qIndex].answers[aIndex].isCorrect;
-    setItems(newItems);
+  const handleCorrectAnswer = (qIndex: number, aIndex: number) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].answers.forEach((a, i) => {
+      a.isCorrect = i === aIndex;
+    });
+    setQuestions(newQuestions);
   };
 
-  // --- RENDER ---
+  const handleQuestionTextChange = (qIndex: number, value: string) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].questionText = value;
+    setQuestions(newQuestions);
+
+    // Clear error saat user mulai mengisi
+    if (formErrors[`questions.${qIndex}.questionText`]) {
+      setFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[`questions.${qIndex}.questionText`];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Validasi title
+    if (!title.trim()) {
+      errors["title"] = "Title is required";
+    } else if (title.trim().length < 3) {
+      errors["title"] = "Title must be at least 3 characters";
+    }
+
+    // Validasi thumbnail
+    if (!thumbnail) {
+      errors["thumbnail"] = "Thumbnail is required";
+    }
+
+    // Validasi questions
+    questions.forEach((q, idx) => {
+      if (!q.questionText.trim()) {
+        errors[`questions.${idx}.questionText`] = "Question text is required";
+      }
+
+      // Cek apakah semua jawaban sudah diisi
+      const emptyAnswers = q.answers.filter((a) => !a.text.trim());
+      if (emptyAnswers.length > 0) {
+        errors[`questions.${idx}.answers`] =
+          "All answer options must be filled";
+      }
+
+      // Cek apakah ada jawaban yang benar
+      const hasCorrectAnswer = q.answers.some((a) => a.isCorrect);
+      if (!hasCorrectAnswer) {
+        errors[`questions.${idx}.answers`] = "Please select a correct answer";
+      }
+    });
+
+    // Validasi score
+    if (settings.scorePerQuestion < 1) {
+      errors["score"] = "Score must be at least 1";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (publish = false) => {
+    // Validasi form
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields correctly");
+      // Scroll to first error
+      const firstErrorKey = Object.keys(formErrors)[0];
+      if (firstErrorKey) {
+        const errorElement = document.querySelector(
+          `[data-error="${firstErrorKey}"]`,
+        );
+        errorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        title: title.trim(),
+        description: description.trim(),
+        thumbnail: thumbnail!,
+        questions: questions.map((q) => ({
+          questionText: q.questionText.trim(),
+          answers: q.answers.map((a) => ({
+            text: a.text.trim(),
+            isCorrect: a.isCorrect,
+          })),
+        })),
+        settings: {
+          ...settings,
+          isPublishImmediately: publish,
+        },
+      };
+
+      await CreateOpenTheBoxApi(payload);
+
+      toast.success(
+        publish
+          ? "Game created and published successfully!"
+          : "Game saved as draft successfully!",
+      );
+
+      // Navigate after short delay untuk user lihat toast
+      setTimeout(() => {
+        navigate("/create-projects");
+      }, 1000);
+    } catch (error) {
+      // Error sudah dihandle di useCreateOpenTheBox hook
+      console.error("Submit error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    navigate("/create-projects");
+  };
+
   return (
-    <div className="min-h-screen bg-[#F0F2F5] font-sans text-gray-700 pb-20">
-      {/* HEADER TITLE */}
-      <div className="bg-white border-b border-gray-300 p-6 mb-6">
-        <div className="max-w-4xl mx-auto">
-          <label className="block text-xs font-bold uppercase text-gray-500 mb-2 tracking-wide">
-            Activity Title
-          </label>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-2xl font-semibold border-gray-300 focus:border-blue-500 h-12"
-            placeholder="Enter title here..."
-          />
-        </div>
+    <div className="w-full bg-slate-50 min-h-screen flex flex-col">
+      {/* Header */}
+      <div className="bg-white h-fit w-full flex justify-between items-center px-8 py-4 border-b">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleCancel}
+          disabled={isSubmitting}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
+        </Button>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6">
-        {/* INSTRUCTION (Optional Label) */}
-        <div className="mb-4 text-sm text-gray-600">
-          <strong>Instructions:</strong> Enter your questions and mark the
-          correct answers.
-        </div>
+      <div className="w-full h-full p-8 justify-center items-center flex flex-col pb-24">
+        <div className="max-w-3xl w-full space-y-6">
+          {/* Header Section */}
+          <div>
+            <Typography variant="h3">Create Open The Box</Typography>
+            <Typography variant="p" className="mt-2 text-slate-500">
+              Tap each box to open it and reveal the question inside.
+            </Typography>
+          </div>
 
-        {/* LIST OF QUESTIONS */}
-        <div className="space-y-6">
-          {items.map((item, qIndex) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative group"
+          {/* Form Utama */}
+          <div className="bg-white w-full h-full p-6 space-y-6 rounded-xl border shadow-sm">
+            <div data-error="title">
+              <FormField
+                required
+                label="Game Title"
+                placeholder="Ex: Math Quiz"
+                type="text"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (formErrors["title"]) {
+                    setFormErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors["title"];
+                      return newErrors;
+                    });
+                  }
+                }}
+                disabled={isSubmitting}
+              />
+              {formErrors["title"] && (
+                <p className="text-sm text-red-500 mt-1">
+                  {formErrors["title"]}
+                </p>
+              )}
+            </div>
+
+            <TextareaField
+              label="Description"
+              placeholder="Describe your activity..."
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={isSubmitting}
+            />
+
+            <div data-error="thumbnail">
+              <div
+                className={isSubmitting ? "opacity-50 pointer-events-none" : ""}
+              >
+                <Dropzone
+                  required
+                  label="Thumbnail Image"
+                  allowedTypes={["image/png", "image/jpeg", "image/jpg"]}
+                  maxSize={2 * 1024 * 1024} // 2MB
+                  onChange={(file) => {
+                    if (!isSubmitting) {
+                      setThumbnail(file);
+                      if (formErrors["thumbnail"]) {
+                        setFormErrors((prev) => {
+                          const newErrors = { ...prev };
+                          delete newErrors["thumbnail"];
+                          return newErrors;
+                        });
+                      }
+                    }
+                  }}
+                />
+              </div>
+              {formErrors["thumbnail"] && (
+                <p className="text-sm text-red-500 mt-1">
+                  {formErrors["thumbnail"]}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Questions List */}
+          <div className="flex justify-between items-center">
+            <Typography variant="p" className="font-semibold">
+              Questions ({questions.length})
+            </Typography>
+            <Button
+              variant="outline"
+              onClick={addQuestion}
+              disabled={isSubmitting}
             >
-              {/* Toolbar Kanan (Move/Copy/Delete) - Mirip Wordwall */}
-              <div className="absolute right-2 top-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button
-                  onClick={() => moveQuestion(qIndex, "up")}
-                  className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-700"
-                  title="Move Up"
-                >
-                  <ArrowUp size={16} />
-                </button>
-                <button
-                  onClick={() => moveQuestion(qIndex, "down")}
-                  className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-700"
-                  title="Move Down"
-                >
-                  <ArrowDown size={16} />
-                </button>
-                <button
-                  onClick={() => duplicateQuestion(qIndex)}
-                  className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600"
-                  title="Duplicate"
-                >
-                  <Copy size={16} />
-                </button>
-                <button
-                  onClick={() => removeQuestion(qIndex)}
-                  className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-red-600"
-                  title="Delete"
-                >
-                  <Trash2 size={16} />
-                </button>
+              <Plus className="mr-2 h-4 w-4" /> Add Question
+            </Button>
+          </div>
+
+          {questions.map((q, qIndex) => (
+            <div
+              key={qIndex}
+              className="bg-white w-full h-full p-6 space-y-6 rounded-xl border shadow-sm relative"
+              data-error={`questions.${qIndex}.questionText`}
+            >
+              <div className="flex justify-between items-start">
+                <Typography variant="p" className="font-medium text-slate-700">
+                  Question {qIndex + 1}
+                </Typography>
+                <Trash2
+                  size={18}
+                  className={
+                    questions.length === 1 || isSubmitting
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-red-500 cursor-pointer hover:text-red-600"
+                  }
+                  onClick={() => {
+                    if (questions.length > 1 && !isSubmitting) {
+                      removeQuestion(qIndex);
+                    }
+                  }}
+                />
               </div>
 
-              <div className="p-6 pr-12">
-                {/* NOMOR & KOLOM SOAL */}
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="text-xl font-bold text-gray-400 min-w-[24px] pt-2">
-                    {qIndex + 1}.
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-xs font-bold uppercase text-gray-400 mb-1">
-                      Question
-                    </label>
-                    <div className="relative">
-                      <Input
-                        value={item.question}
-                        onChange={(e) =>
-                          handleQuestionChange(qIndex, e.target.value)
-                        }
-                        className="pr-20 py-5 text-lg"
-                        placeholder="Type your question..."
-                      />
-                      {/* Icons Placeholder inside Input */}
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                        <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded">
-                          <Mic size={18} />
-                        </button>
-                        <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded">
-                          <ImageIcon size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <TextareaField
+                  required
+                  label="Question Text"
+                  placeholder="Type your question here"
+                  rows={2}
+                  value={q.questionText}
+                  onChange={(e) =>
+                    handleQuestionTextChange(qIndex, e.target.value)
+                  }
+                  disabled={isSubmitting}
+                />
+                {formErrors[`questions.${qIndex}.questionText`] && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {formErrors[`questions.${qIndex}.questionText`]}
+                  </p>
+                )}
+              </div>
 
-                {/* KOLOM JAWABAN (Grid Layout) */}
-                <div className="pl-10">
-                  <label className="block text-xs font-bold uppercase text-gray-400 mb-2">
-                    Answers
-                  </label>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-                    {item.answers.map((ans, aIndex) => (
-                      <div
-                        key={ans.id}
-                        className="flex items-center gap-2 group/answer"
-                      >
-                        {/* Label a,b,c,d */}
-                        <span className="text-sm font-bold text-gray-400 w-4">
-                          {String.fromCharCode(97 + aIndex)}
-                        </span>
-
-                        {/* Toggle Benar/Salah */}
-                        <button
-                          onClick={() => toggleCorrect(qIndex, aIndex)}
-                          className={`
-                            flex items-center justify-center w-8 h-8 rounded border transition-colors
-                            ${
-                              ans.isCorrect
-                                ? "bg-green-100 border-green-500 text-green-600"
-                                : "bg-white border-gray-300 text-gray-300 hover:border-gray-400 hover:text-gray-400"
-                            }
-                          `}
-                          title={
-                            ans.isCorrect
-                              ? "Mark as Incorrect"
-                              : "Mark as Correct"
-                          }
-                        >
-                          {ans.isCorrect ? (
-                            <Check size={18} strokeWidth={3} />
-                          ) : (
-                            <X size={18} strokeWidth={3} />
-                          )}
-                        </button>
-
-                        {/* Input Jawaban */}
+              {/* Answers */}
+              <div
+                className="space-y-4"
+                data-error={`questions.${qIndex}.answers`}
+              >
+                <Label>
+                  Answers (Select correct one){" "}
+                  <span className="text-red-500">*</span>
+                </Label>
+                <RadioGroup
+                  value={q.answers.findIndex((a) => a.isCorrect).toString()}
+                  onValueChange={(val) => {
+                    if (!isSubmitting) {
+                      handleCorrectAnswer(qIndex, Number(val));
+                    }
+                  }}
+                >
+                  <div className="space-y-3">
+                    {q.answers.map((a, aIndex) => (
+                      <div key={aIndex} className="flex items-center gap-3">
+                        <RadioGroupItem
+                          value={aIndex.toString()}
+                          disabled={isSubmitting}
+                        />
                         <div className="flex-1 relative">
                           <Input
-                            value={ans.text}
+                            placeholder={`Option ${aIndex + 1}`}
+                            value={a.text}
                             onChange={(e) =>
                               handleAnswerChange(qIndex, aIndex, e.target.value)
                             }
-                            className="pr-8" // Space for delete icon
-                            placeholder={`Answer option`}
+                            className="pr-8"
+                            disabled={isSubmitting}
                           />
-                          {/* Tombol Hapus Jawaban (Muncul saat hover) */}
-                          {item.answers.length > 1 && (
-                            <button
+                          {q.answers.length > 2 && !isSubmitting && (
+                            <X
+                              size={16}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400 hover:text-red-500"
                               onClick={() => removeAnswer(qIndex, aIndex)}
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500 opacity-0 group-hover/answer:opacity-100 transition-opacity"
-                            >
-                              <X size={14} />
-                            </button>
+                            />
                           )}
                         </div>
                       </div>
                     ))}
                   </div>
+                </RadioGroup>
 
-                  {/* TOMBOL TAMBAH JAWABAN */}
-                  <div className="mt-3 ml-6 md:ml-0">
-                    <button
-                      onClick={() => addAnswer(qIndex)}
-                      className="text-sm font-semibold text-blue-500 hover:text-blue-700 flex items-center gap-1 py-1 px-2 rounded hover:bg-blue-50 transition-colors"
-                    >
-                      <Plus size={16} /> Add answer
-                    </button>
-                  </div>
-                </div>
+                {formErrors[`questions.${qIndex}.answers`] && (
+                  <p className="text-sm text-red-500">
+                    {formErrors[`questions.${qIndex}.answers`]}
+                  </p>
+                )}
+
+                {q.answers.length < 6 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => addAnswer(qIndex)}
+                    className="text-blue-600 pl-0 hover:bg-transparent hover:text-blue-700"
+                    disabled={isSubmitting}
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Add Option
+                  </Button>
+                )}
               </div>
             </div>
           ))}
-        </div>
 
-        {/* TOMBOL TAMBAH SOAL (Bawah) */}
-        <div className="mt-8 mb-20">
-          <button
-            onClick={addQuestion}
-            className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 font-semibold flex items-center justify-center gap-2 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50/50 transition-all text-lg"
-          >
-            <Plus size={24} /> Add a new item
-          </button>
-        </div>
-      </div>
-
-      {/* FOOTER ACTION BAR (Sticky) */}
-      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-300 p-4 z-50">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            {items.length} Questions Created
+          {/* Settings */}
+          <div className="bg-white w-full h-full p-6 space-y-6 rounded-xl border shadow-sm">
+            <Typography variant="p" className="font-semibold">
+              Settings
+            </Typography>
+            <div className="flex justify-between items-center">
+              <FormField
+                label="Score Per Question"
+                placeholder="1"
+                type="number"
+                value={settings.scorePerQuestion}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 1) {
+                    setSettings((prev) => ({
+                      ...prev,
+                      scorePerQuestion: value,
+                    }));
+                    if (formErrors["score"]) {
+                      setFormErrors((prev) => {
+                        const newErrors = { ...prev };
+                        delete newErrors["score"];
+                        return newErrors;
+                      });
+                    }
+                  }
+                }}
+                min={1}
+                disabled={isSubmitting}
+              />
+            </div>
+            {formErrors["score"] && (
+              <p className="text-sm text-red-500">{formErrors["score"]}</p>
+            )}
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" className="text-gray-600">
-              Cancel
+
+          {/* Footer Actions */}
+          <div className="flex gap-4 justify-end w-full pt-4">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="destructive" disabled={isSubmitting}>
+                  <X className="mr-2 h-4 w-4" /> Cancel
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Discard Changes?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    All unsaved changes will be lost. This action cannot be
+                    undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleCancel}>
+                    Discard
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleSubmit(false)}
+              disabled={isSubmitting}
+            >
+              <SaveIcon className="mr-2 h-4 w-4" />
+              {isSubmitting ? "Saving..." : "Save Draft"}
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8">
-              Done
+
+            <Button
+              size="sm"
+              className="bg-black text-white hover:bg-gray-800"
+              onClick={() => handleSubmit(true)}
+              disabled={isSubmitting}
+            >
+              <EyeIcon className="mr-2 h-4 w-4" />
+              {isSubmitting ? "Publishing..." : "Publish"}
             </Button>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default CreateOpenTheBox;
