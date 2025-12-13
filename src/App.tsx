@@ -21,7 +21,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
-        <Route path="/openthebox/play/:id" element={<OpenTheBoxGame />} />
+        <Route path="/open-the-box/play/:id" element={<OpenTheBoxGame />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />

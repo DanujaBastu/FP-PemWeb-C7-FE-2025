@@ -27,9 +27,9 @@ export default function OpenTheBoxGame() {
   const { id } = useParams();
 
   // --- AUDIO REFS ---
-  const correctSfx = useRef(new Audio("/sound/Correct.wav"));
+  const correctSfx = useRef(new Audio("/sound/correct.wav"));
   const wrongSfx = useRef(new Audio("/sound/wrong.mp3"));
-  const tickSfx = useRef(new Audio("/sound/Tiktok.mp3"));
+  const tickSfx = useRef(new Audio("/sound/tiktok.mp3"));
   const chillSfx = useRef(new Audio("/sound/chill.mp3"));
   const vibingSfx = useRef(new Audio("/sound/vibing.mp3"));
 
