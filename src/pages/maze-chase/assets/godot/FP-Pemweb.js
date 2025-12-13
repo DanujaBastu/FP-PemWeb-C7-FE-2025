@@ -11605,7 +11605,6 @@ const Features = {
 };
 
 const Preloader = /** @constructor */ function () {
-   
   function getTrackedResponse(response, load_status) {
     function onloadprogress(reader, controller) {
       return reader.read().then(function (result) {
@@ -11758,7 +11757,7 @@ const Preloader = /** @constructor */ function () {
  *
  * @typedef {Object} EngineConfig
  */
-const EngineConfig = {};  
+const EngineConfig = {};
 
 /**
  * @struct
@@ -11766,7 +11765,6 @@ const EngineConfig = {};
  * @ignore
  */
 const InternalConfig = function (initConfig) {
-   
   const cfg = /** @lends {InternalConfig.prototype} */ {
     /**
      * Whether to unload the engine automatically after the instance is initialized.
@@ -11955,7 +11953,7 @@ const InternalConfig = function (initConfig) {
      * @type {?function(...*)}
      */
     onPrint: function () {
-      console.log.apply(console, Array.from(arguments));  
+      console.log.apply(console, Array.from(arguments));
     },
     /**
      * A callback function for handling the standard error stream. This method should usually only be used in debug pages.
@@ -11970,7 +11968,7 @@ const InternalConfig = function (initConfig) {
      * @type {?function(...*)}
      */
     onPrintError: function (var_args) {
-      console.error.apply(console, Array.from(arguments));  
+      console.error.apply(console, Array.from(arguments));
     },
   };
 
@@ -12166,7 +12164,6 @@ const Engine = (function () {
    * @param {EngineConfig} initConfig The initial config for this instance.
    */
   function Engine(initConfig) {
-     
     this.config = new InternalConfig(initConfig);
     this.rtenv = null;
   }
