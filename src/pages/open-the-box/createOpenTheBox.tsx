@@ -1,5 +1,3 @@
-// PATH: src/pages/open-the-box/createOpenTheBox.tsx
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -9,6 +7,7 @@ import { TextareaField } from "@/components/ui/textarea-field"; // Pastikan komp
 import { Label } from "@/components/ui/label";
 import Dropzone from "@/components/ui/dropzone"; // Pastikan komponen ini ada
 import { Typography } from "@/components/ui/typography"; // Pastikan komponen ini ada
+import axios from "axios";
 import {
   ArrowLeft,
   Plus,
@@ -233,20 +232,23 @@ function CreateOpenTheBox() {
     } catch (err: unknown) {
       console.error("🔥 ERROR:", err);
 
-      if (err.response && err.response.data) {
-        // --- INI SOLUSINYA ---
-        // Kita paksa browser menampilkan pesan error dari backend
-        // supaya kita tahu field mana yang salah.
-        const errorData = err.response.data;
-        const message = errorData.message || JSON.stringify(errorData);
+      if (axios.isAxiosError(err)) {
+        const errorData = err.response?.data as
+          | { message?: string }
+          | undefined;
+        const message =
+          errorData?.message ?? err.message ?? "Request gagal (Axios error)";
 
-        alert(`DITOLAK BACKEND:\n\n${JSON.stringify(message, null, 2)}`);
-
-        console.log("ERROR DARI SERVER");
-        console.log(message);
-      } else {
-        alert("Gagal koneksi ke server (Cek apakah backend nyala)");
+        alert(`DITOLAK BACKEND:\n\n${message}`);
+        return;
       }
+
+      if (err instanceof Error) {
+        alert(`Terjadi error:\n\n${err.message}`);
+        return;
+      }
+
+      alert("Terjadi error tidak dikenal");
     } finally {
       setIsSubmitting(false);
     }
@@ -512,5 +514,4 @@ function CreateOpenTheBox() {
     </div>
   );
 }
-
 export default CreateOpenTheBox;

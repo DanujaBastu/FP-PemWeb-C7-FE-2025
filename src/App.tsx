@@ -51,7 +51,6 @@ function App() {
         <Route path="/quiz/play/:id" element={<Quiz />} />
         <Route path="/open-the-box/play/:id" element={<OpenTheBoxGame />} />
 
-        {/* RUTE CREATE OPEN THE BOX */}
         <Route path="/create-open-the-box" element={<CreateOpenTheBox />} />
 
         <Route path="/type-the-answer/play/:id" element={<TypeTheAnswer />} />
