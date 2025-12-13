@@ -1,10 +1,8 @@
 import axios, { type AxiosInstance } from "axios";
 import { useAuthStore } from "@/store/useAuthStore";
 
-// --- PERBAIKAN DI SINI ---
-// Kita tulis langsung alamat Backend-nya agar tidak salah alamat lagi
 const api: AxiosInstance = axios.create({
-  baseURL: "http://localhost:3000/api", // <--- PENTING! JANGAN UBAH INI
+  baseURL: import.meta.env.VITE_API_URL,
   timeout: 10000,
 });
 
@@ -25,6 +23,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       const { logout } = useAuthStore.getState();
       logout();
+      window.location.href = "/login";
     }
     return Promise.reject(err);
   },

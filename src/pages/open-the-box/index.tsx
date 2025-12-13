@@ -50,6 +50,7 @@ export default function OpenTheBoxGame() {
   // --- STATE ---
   const [items, setItems] = useState<BoxContent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [gameTitle, setGameTitle] = useState("");
 
   const [boxStatus, setBoxStatus] = useState<BoxStatus[]>([]);
@@ -133,7 +134,7 @@ export default function OpenTheBoxGame() {
     const fetchGame = async () => {
       if (!id) return;
       try {
-        const res = await api.get(`/game/game-list/open-the-box/${id}`);
+        const res = await api.get(`/api/game/game-list/open-the-box/${id}`);
         let targetData = res.data?.data || res.data;
         if (!targetData.game_json) targetData = res.data;
 
@@ -152,7 +153,8 @@ export default function OpenTheBoxGame() {
           setBoxStatus(new Array(shuffled.slice(0, 10).length).fill("closed"));
         }
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch game:", err);
+        setError("Failed to load game. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -234,6 +236,24 @@ export default function OpenTheBoxGame() {
     return (
       <div className="min-h-screen bg-[#F3F1E8] dark:bg-black flex items-center justify-center text-stone-400 font-mono font-bold tracking-widest">
         INITIALIZING...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen bg-[#F3F1E8] dark:bg-black flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-[#1a1a1a] border border-red-500 rounded-lg p-8 max-w-md w-full text-center">
+          <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-4">
+            Error Loading Game
+          </h2>
+          <p className="text-stone-600 dark:text-stone-400 mb-6">{error}</p>
+          <Button
+            onClick={() => navigate("/")}
+            className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold"
+          >
+            Back to Home
+          </Button>
+        </div>
       </div>
     );
 

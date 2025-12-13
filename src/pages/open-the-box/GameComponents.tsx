@@ -1,7 +1,8 @@
+// PATH: src/pages/open-the-box/GameComponents.tsx
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Lock, Check, Settings } from "lucide-react"; // FIX: Hapus ikon tidak terpakai
+import { Lock, Check, Settings } from "lucide-react";
 
 export interface BoxContent {
   id: string | number;
@@ -13,16 +14,16 @@ export interface BoxContent {
 export type BoxStatus = "closed" | "correct" | "wrong";
 
 interface BoxProps {
-  index: number;
+  index: number; // Index diterima di interface
   status: BoxStatus;
   text: string;
   onClick: () => void;
   layoutId?: string;
 }
 
-// --- KOMPONEN KARTU (BOX ITEM) FINAL ---
+// --- KOMPONEN KARTU (BOX ITEM) FIXED ---
 export const BoxItem = ({
-  // FIX: Hapus 'index' dan 'text' dari sini agar Linter tidak error
+  //index, // FIX: Index diterima disini
   status,
   onClick,
   layoutId,
@@ -30,6 +31,7 @@ export const BoxItem = ({
   const isClickable = status === "closed";
 
   return (
+    // [PENTING] Class 'group' wajib ada di sini agar anak-anaknya tahu saat di-hover
     <div className="relative w-full h-full perspective-1000 group z-10">
       <motion.div
         layout
@@ -38,15 +40,14 @@ export const BoxItem = ({
         whileTap={isClickable ? { scale: 0.95 } : {}}
         whileHover={isClickable ? { y: -5, zIndex: 20 } : {}}
         animate={{
-          // KARTU BERPUTAR 180 DERAJAT SAAT TERBUKA (BENAR ATAU SALAH)
           rotateY: status !== "closed" ? 180 : 0,
           x: status === "wrong" ? [0, -10, 10, -10, 10, 0] : 0,
           scale: status === "correct" ? [1, 1.05, 1] : 1,
           boxShadow:
             status === "correct"
-              ? "0 0 40px rgba(234, 179, 8, 0.5)" // Glow Emas (Divine)
+              ? "0 0 40px rgba(234, 179, 8, 0.5)" // Glow Emas
               : status === "wrong"
-                ? "0 0 30px rgba(185, 28, 28, 0.5)" // Glow Merah (Locked)
+                ? "0 0 30px rgba(185, 28, 28, 0.5)" // Glow Merah
                 : "0 10px 20px rgba(0,0,0,0.3)",
         }}
         transition={{
@@ -58,14 +59,15 @@ export const BoxItem = ({
         }}
         className={cn(
           "w-full aspect-square rounded-xl transition-all flex flex-col items-center justify-center relative overflow-hidden",
-          // Background dasar hitam agar tidak ada celah putih
           "bg-black",
-          // Border emas tipis hanya saat tertutup
-          status === "closed" ? "border border-amber-800/40" : "border-0",
+          status === "closed"
+            ? "border border-amber-800/40" // 🟤 Belum dijawab (Emas Redup)
+            : status === "correct"
+              ? "border-1 border-amber-400 dark:border-amber-500" // 🟡 Jika BENAR (Emas Terang)
+              : "border-2 border-red-600 dark:border-red-700", // 🔴 Jika SALAH (Merah)
         )}
       >
         {/* --- LAYER GAMBAR BACKGROUND --- */}
-        {/* scale-110 = Zoom in 10% agar gambar menutupi garis putih di pinggir */}
         {status === "closed" && (
           <div
             className={cn(
@@ -76,43 +78,46 @@ export const BoxItem = ({
         )}
 
         <AnimatePresence mode="wait">
-          {/* --- TAMPILAN TERTUTUP (OPEN) --- */}
+          {/* --- TAMPILAN TERTUTUP (OPEN STATE) --- */}
           {status === "closed" && (
             <motion.div
               key="closed"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              //initial={{ opacity: 0 }}
+              //animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              // [BAGIAN PERBAIKAN ANDA]
+              // opacity-0 = Awalnya hilang
+              // group-hover:opacity-100 = Muncul saat mouse masuk area 'group'
               className="z-10 flex flex-col items-center justify-center w-full h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out"
             >
-              {/* Text OPEN yang muncul saat hover */}
               <div className="relative transform group-hover:scale-110 transition-transform duration-500">
-                {/* Main text */}
+                {/* Teks Utama */}
                 <div className="text-lg font-serif tracking-[0.35em] text-amber-50 font-medium drop-shadow-[0_2px_10px_rgba(251,191,36,0.4)]">
                   OPEN
                 </div>
-                {/* Subtle glow effect */}
+                {/* Glow Belakang */}
                 <div className="absolute inset-0 text-lg font-serif tracking-[0.35em] text-amber-300/60 font-medium blur-sm -z-10">
                   OPEN
                 </div>
-                {/* Decorative line bottom */}
+                {/* Garis Hiasan */}
                 <div className="mt-2 mx-auto w-12 h-[1px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent"></div>
+
+                {/* Opsi: Jika ingin menampilkan nomor urut (Index) */}
+                {/* <div className="mt-2 text-xs text-amber-200/50 font-mono">{index + 1}</div> */}
               </div>
             </motion.div>
           )}
 
-          {/* --- TAMPILAN BENAR (DIVINE) --- */}
+          {/* --- TAMPILAN BENAR --- */}
           {status === "correct" && (
             <motion.div
               key="correct"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
-              // PENTING: rotateY(180deg) DISINI MEMBALIKKAN ISI KARTU AGAR TIDAK CERMIN
               style={{ transform: "rotateY(180deg)" }}
               className="w-full h-full flex flex-col items-center justify-center z-10 p-4 text-center bg-stone-100 dark:bg-black cursor-default"
             >
-              {/* Ikon Emas */}
               <div className="rounded-full border-2 border-amber-500/50 p-3 mb-3 shadow-[0_0_20px_rgba(245,158,11,0.3)] bg-amber-100/30 dark:bg-amber-900/20">
                 <Check
                   className="w-8 h-8 text-amber-600 dark:text-amber-400"
@@ -125,18 +130,16 @@ export const BoxItem = ({
             </motion.div>
           )}
 
-          {/* --- TAMPILAN SALAH (LOCKED) --- */}
+          {/* --- TAMPILAN SALAH --- */}
           {status === "wrong" && (
             <motion.div
               key="wrong"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
-              // PENTING: rotateY(180deg) DISINI JUGA DIPERLUKAN
               style={{ transform: "rotateY(180deg)" }}
               className="w-full h-full flex flex-col items-center justify-center z-10 p-4 text-center bg-stone-100 dark:bg-black cursor-not-allowed"
             >
-              {/* Ikon Merah */}
               <div className="rounded-full border-2 border-red-800/60 dark:border-red-900/60 p-3 mb-3 bg-red-100/40 dark:bg-red-950/30">
                 <Lock
                   className="w-8 h-8 text-red-800 dark:text-red-700"
@@ -153,6 +156,8 @@ export const BoxItem = ({
     </div>
   );
 };
+
+// ... (Sisa kode QuestionModal dan SettingsModal biarkan sama seperti sebelumnya)
 
 // --- 2. MODAL SOAL (QUESTION MODAL) ---
 interface QuestionModalProps {
@@ -196,7 +201,6 @@ export const QuestionModal = ({
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="relative bg-[#F3F1E8] dark:bg-[#1a1a1a] rounded-xl w-full max-w-3xl shadow-2xl flex flex-col md:flex-row min-h-[400px] border border-stone-300 dark:border-amber-900/40 overflow-hidden"
       >
-        {/* Timer */}
         <div className="absolute top-4 right-4 z-20 flex items-center justify-center pointer-events-none">
           <div className="relative w-16 h-16 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90">
@@ -238,7 +242,6 @@ export const QuestionModal = ({
           </div>
         </div>
 
-        {/* KIRI: Pertanyaan */}
         <div className="md:w-5/12 bg-gradient-to-br from-stone-200 to-stone-300 dark:from-black dark:to-[#111] flex flex-col items-center justify-center p-8 text-center border-b md:border-b-0 md:border-r border-stone-300 dark:border-amber-900/30 relative">
           <h2 className="text-stone-500 dark:text-amber-700 text-sm font-bold tracking-[0.3em] uppercase mb-6 font-serif">
             The Riddle
@@ -248,7 +251,6 @@ export const QuestionModal = ({
           </div>
         </div>
 
-        {/* KANAN: Jawaban */}
         <div className="md:w-7/12 p-6 md:p-8 pt-16 md:pt-8 flex flex-col justify-center bg-[#FDFBF7] dark:bg-[#141414] gap-3 md:gap-4 relative">
           <h4 className="text-stone-400 text-sm font-medium text-center mb-4 font-serif italic tracking-wider">
             Choose your fate
