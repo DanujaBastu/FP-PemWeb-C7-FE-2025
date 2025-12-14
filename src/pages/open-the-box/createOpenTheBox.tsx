@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TextareaField } from "@/components/ui/textarea-field";
+import { TextareaField } from "@/components/ui/textarea-field"; // Pastikan komponen ini ada
 import { Label } from "@/components/ui/label";
-import Dropzone from "@/components/ui/dropzone";
-import { Typography } from "@/components/ui/typography";
+import Dropzone from "@/components/ui/dropzone"; // Pastikan komponen ini ada
+import { Typography } from "@/components/ui/typography"; // Pastikan komponen ini ada
+import axios from "axios";
 import {
   ArrowLeft,
   Plus,
@@ -29,11 +30,10 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-// FIX 1: Import AxiosError
-import { AxiosError } from "axios";
+
 import api from "@/api/axios";
 
-// ... (Helper & Interface code remains the same) ...
+// --- Helper & Interface ---
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
 interface Answer {
@@ -48,6 +48,7 @@ interface Question {
   answers: Answer[];
 }
 
+// STORAGE KEYS (Untuk Auto-Save Draft)
 const STORAGE_KEY_TITLE = "otb_draft_title";
 const STORAGE_KEY_DESC = "otb_draft_desc";
 const STORAGE_KEY_QUESTIONS = "otb_draft_questions";
@@ -56,7 +57,8 @@ function CreateOpenTheBox() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ... (State & Effect hooks remain the same) ...
+  // --- STATE ---
+  // Mengambil data dari LocalStorage jika ada (Fitur Draft)
   const [title, setTitle] = useState(
     () => localStorage.getItem(STORAGE_KEY_TITLE) || "",
   );
@@ -85,6 +87,7 @@ function CreateOpenTheBox() {
     }
   });
 
+  // --- AUTO SAVE EFFECT ---
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_TITLE, title);
     localStorage.setItem(STORAGE_KEY_DESC, description);
@@ -97,15 +100,16 @@ function CreateOpenTheBox() {
     localStorage.removeItem(STORAGE_KEY_QUESTIONS);
   };
 
-  // ... (Logic Questions & Answers remain the same) ...
+  // --- LOGIC QUESTIONS ---
   const addQuestion = () => {
+    if (questions.length >= 10) return toast.error("Maksimal 10 pertanyaan");
     setQuestions((prev) => [
       ...prev,
       {
         id: generateId(),
         questionText: "",
         answers: [
-          { id: generateId(), text: "", isCorrect: true },
+          { id: generateId(), text: "", isCorrect: true }, // Default jawaban pertama benar
           { id: generateId(), text: "", isCorrect: false },
         ],
       },
@@ -137,8 +141,10 @@ function CreateOpenTheBox() {
     setQuestions(newQuestions);
   };
 
+  // --- LOGIC ANSWERS ---
   const addAnswer = (qIndex: number) => {
     const newQuestions = [...questions];
+    // Batasi maks 4 jawaban agar sesuai layout kartu 2x2 atau 4 kolom
     if (newQuestions[qIndex].answers.length >= 4)
       return toast.error("Maksimal 4 jawaban.");
     newQuestions[qIndex].answers.push({
@@ -169,67 +175,56 @@ function CreateOpenTheBox() {
 
   const toggleCorrectAnswer = (qIndex: number, aIndex: number) => {
     const newQuestions = [...questions];
+    // Reset semua jadi false dulu, baru set yang dipilih jadi true (Single Correct Answer)
     newQuestions[qIndex].answers.forEach((ans, idx) => {
       ans.isCorrect = idx === aIndex;
     });
     setQuestions(newQuestions);
   };
 
-  // --- REVISED SUBMIT HANDLER ---
   const handleSubmit = async (publish = false) => {
+    // 1. Validasi Frontend
     if (!title) return toast.error("Judul wajib diisi");
-    // Ensure file is selected if required
-    // if (!thumbnail) return toast.error("Thumbnail wajib diupload");
+    if (!thumbnail) return toast.error("Thumbnail wajib diupload");
+    if (questions.length === 0)
+      return toast.error("Minimal harus ada 1 pertanyaan");
+    if (questions.length > 10) return toast.error("Maksimal 10 pertanyaan");
 
     setIsSubmitting(true);
 
     try {
       const formData = new FormData();
 
-      // Basic fields
+      // --- KITA COBA KOMBINASI STANDARD DULU ---
       formData.append("name", title);
       formData.append("description", description || "-");
+
+      // [TEBAKAN 1]: Biasanya backend minta 'game_template_slug' (snake_case)
       formData.append("game_template_slug", "open-the-box");
 
-      if (thumbnail) {
-        formData.append("thumbnail_image", thumbnail);
-      }
+      // [TEBAKAN 2]: Nama field gambar. Kita kirim 'thumbnail_image'.
+      // Nanti lihat Error Alert kalau ternyata dia minta 'thumbnail' atau 'file'.
+      formData.append("thumbnail_image", thumbnail);
 
+      // Data lain
       formData.append("is_publish_immediately", publish ? "true" : "false");
       formData.append("is_question_randomized", "false");
       formData.append("is_answer_randomized", "true");
       formData.append("score_per_question", "100");
 
-      // Prepare data object to match Zod Schema
       const gameData = {
         items: questions.map((q, idx) => ({
-          id: q.id,
-          boxNumber: idx + 1,
-          type: "text", // Hardcoded as per schema requirement
-          content: q.questionText || "Question",
-          isLocked: false,
-          // Note: These fields will be stripped by backend if schema doesn't allow them,
-          // but we send them just in case schema was updated.
+          id: idx + 1,
+          text: q.questionText,
           options: q.answers.map((a) => a.text),
           answer: q.answers.find((a) => a.isCorrect)?.text || q.answers[0].text,
         })),
-        settings: {
-          theme: "classic", // Must match enum
-          randomize: true,
-        },
+        settings: { theme: "default" },
       };
 
-      // !IMPORTANT: Check how backend parses JSON
-      // If backend validation fails with "Expected object, received string",
-      // it means backend expects a JSON string for this field.
       formData.append("gameData", JSON.stringify(gameData));
 
-      // DEBUG: Log payload to see what we are sending
-      console.log("Submitting Payload:", {
-        name: title,
-        gameDataString: JSON.stringify(gameData),
-      });
-
+      // EKSEKUSI
       await api.post("/api/game/game-type/open-the-box", formData);
 
       toast.success("Berhasil!");
@@ -237,25 +232,23 @@ function CreateOpenTheBox() {
     } catch (err: unknown) {
       console.error("🔥 ERROR:", err);
 
-      if (err instanceof AxiosError) {
-        // FIX 2: Correct check for AxiosError
-        if (err.response && err.response.data) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const errorData = err.response.data as any;
-          // Try to extract the most meaningful message
-          const message =
-            errorData.message || errorData.error || JSON.stringify(errorData);
+      if (axios.isAxiosError(err)) {
+        const errorData = err.response?.data as
+          | { message?: string }
+          | undefined;
+        const message =
+          errorData?.message ?? err.message ?? "Request gagal (Axios error)";
 
-          // Show alert for debugging immediately
-          alert(
-            `Backend Rejected Data (422):\n\n${JSON.stringify(message, null, 2)}`,
-          );
-        } else {
-          alert(`Connection Error: ${err.message}`);
-        }
-      } else {
-        alert("An unexpected error occurred.");
+        alert(`DITOLAK BACKEND:\n\n${message}`);
+        return;
       }
+
+      if (err instanceof Error) {
+        alert(`Terjadi error:\n\n${err.message}`);
+        return;
+      }
+
+      alert("Terjadi error tidak dikenal");
     } finally {
       setIsSubmitting(false);
     }
@@ -267,12 +260,9 @@ function CreateOpenTheBox() {
     toast.success("Draft dihapus");
   };
 
-  // ... (JSX Return remains unchanged) ...
   return (
-    // ... [Copy existing JSX here] ...
-    // Just to keep response short, I assume JSX is same as previous correct version
     <div className="w-full bg-[#F0F2F5] min-h-screen flex flex-col font-sans pb-24">
-      {/* ... Header ... */}
+      {/* Header Sticky */}
       <div className="bg-white border-b h-16 w-full flex justify-between items-center px-6 sticky top-0 z-50 shadow-sm">
         <Button
           size="sm"
@@ -287,11 +277,11 @@ function CreateOpenTheBox() {
         >
           Create Open The Box
         </Typography>
-        <div className="w-20"></div>
+        <div className="w-20"></div> {/* Spacer agar Title di tengah */}
       </div>
 
       <div className="w-full max-w-5xl mx-auto p-6 flex flex-col gap-8">
-        {/* ... Metadata ... */}
+        {/* Metadata Section */}
         <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm space-y-6">
           <div>
             <Label className="mb-2 block text-xs font-bold uppercase text-slate-500 tracking-wider">
@@ -317,7 +307,7 @@ function CreateOpenTheBox() {
               <Dropzone
                 label="Upload Thumbnail"
                 onChange={setThumbnail}
-                maxSize={2000000}
+                maxSize={2000000} // 2MB
                 allowedTypes={["image/jpeg", "image/png", "image/webp"]}
               />
               {thumbnail && (
@@ -330,13 +320,14 @@ function CreateOpenTheBox() {
           </div>
         </div>
 
-        {/* ... Questions ... */}
+        {/* Questions List Section */}
         <div className="space-y-6">
           {questions.map((q, qIndex) => (
             <div
               key={q.id}
               className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative group hover:shadow-md transition-shadow"
             >
+              {/* Question Toolbar */}
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button
                   variant="outline"
@@ -357,6 +348,7 @@ function CreateOpenTheBox() {
                 </Button>
               </div>
 
+              {/* Question Input */}
               <div className="flex items-start gap-4 mb-6 pr-24">
                 <div className="bg-slate-100 text-slate-500 w-8 h-8 flex items-center justify-center rounded-full font-bold mt-1">
                   {qIndex + 1}
@@ -379,6 +371,7 @@ function CreateOpenTheBox() {
                 </div>
               </div>
 
+              {/* Answers Grid */}
               <div className="pl-12">
                 <Label className="text-xs font-bold uppercase text-slate-400 mb-2 block">
                   Answers
@@ -389,10 +382,11 @@ function CreateOpenTheBox() {
                       key={a.id}
                       className="flex items-center gap-3 group/answer"
                     >
+                      {/* Correct/Incorrect Toggle */}
                       <div
                         onClick={() => toggleCorrectAnswer(qIndex, aIndex)}
                         className={`
-                                cursor-pointer w-10 h-10 flex items-center justify-center rounded-lg border-2 transition-all
+                                cursor-pointer w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg border-2 transition-all
                                 ${
                                   a.isCorrect
                                     ? "bg-green-50 border-green-500 text-green-600 shadow-sm scale-105"
@@ -409,6 +403,8 @@ function CreateOpenTheBox() {
                           <X size={20} strokeWidth={3} />
                         )}
                       </div>
+
+                      {/* Answer Input */}
                       <div className="relative flex-1">
                         <Input
                           value={a.text}
@@ -430,6 +426,7 @@ function CreateOpenTheBox() {
                     </div>
                   ))}
                 </div>
+
                 {q.answers.length < 4 && (
                   <Button
                     variant="ghost"
@@ -443,6 +440,7 @@ function CreateOpenTheBox() {
               </div>
             </div>
           ))}
+
           <Button
             onClick={addQuestion}
             className="w-full py-8 border-2 border-dashed border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all"
@@ -453,6 +451,7 @@ function CreateOpenTheBox() {
         </div>
       </div>
 
+      {/* Footer Action Bar */}
       <div className="fixed bottom-0 left-0 w-full bg-white border-t p-4 flex justify-between items-center px-8 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <div className="text-slate-500 text-sm font-medium">
           {questions.length} Items Created
@@ -485,13 +484,16 @@ function CreateOpenTheBox() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
           <Button
             variant="outline"
             onClick={() => handleSubmit(false)}
             disabled={isSubmitting}
           >
-            <SaveIcon className="mr-2 h-4 w-4" /> Save Draft
+            <SaveIcon className="mr-2 h-4 w-4" />
+            Save Draft
           </Button>
+
           <Button
             onClick={() => handleSubmit(true)}
             disabled={isSubmitting}
@@ -512,5 +514,4 @@ function CreateOpenTheBox() {
     </div>
   );
 }
-
 export default CreateOpenTheBox;
