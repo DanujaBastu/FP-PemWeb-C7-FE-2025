@@ -4,8 +4,6 @@ import {
   Trash2,
   Plus,
   Copy,
-  Image as ImageIcon,
-  Mic,
   Check,
   X,
   ArrowUp,
@@ -106,67 +104,74 @@ const EditOpenTheBox = () => {
   };
   // ... (Paste fungsi removeQuestion, duplicateQuestion, moveQuestion, handleQuestionChange di sini) ...
   // ... (Paste fungsi addAnswer, removeAnswer, handleAnswerChange, toggleCorrect di sini) ...
-    // Agar kode tidak terlalu panjang di sini, saya asumsikan Anda menyalin fungsi-fungsi
-    // manipulasi state yang SAMA PERSIS dari createOpenTheBox.tsx
-    const removeQuestion = (index: number) => {
-        if (items.length <= 1) return;
-        const newItems = [...items];
-        newItems.splice(index, 1);
-        setItems(newItems);
-    };
+  // Agar kode tidak terlalu panjang di sini, saya asumsikan Anda menyalin fungsi-fungsi
+  // manipulasi state yang SAMA PERSIS dari createOpenTheBox.tsx
+  const removeQuestion = (index: number) => {
+    if (items.length <= 1) return;
+    const newItems = [...items];
+    newItems.splice(index, 1);
+    setItems(newItems);
+  };
 
-    const duplicateQuestion = (index: number) => {
-        const itemToCopy = items[index];
-        const newItem = {
-            ...itemToCopy,
-            id: generateId(),
-            answers: itemToCopy.answers.map((a) => ({ ...a, id: generateId() })),
-        };
-        const newItems = [...items];
-        newItems.splice(index + 1, 0, newItem);
-        setItems(newItems);
+  const duplicateQuestion = (index: number) => {
+    const itemToCopy = items[index];
+    const newItem = {
+      ...itemToCopy,
+      id: generateId(),
+      answers: itemToCopy.answers.map((a) => ({ ...a, id: generateId() })),
     };
+    const newItems = [...items];
+    newItems.splice(index + 1, 0, newItem);
+    setItems(newItems);
+  };
 
-    const moveQuestion = (index: number, direction: "up" | "down") => {
-        if (direction === "up" && index === 0) return;
-        if (direction === "down" && index === items.length - 1) return;
-        const newItems = [...items];
-        const targetIndex = direction === "up" ? index - 1 : index + 1;
-        [newItems[index], newItems[targetIndex]] = [newItems[targetIndex], newItems[index]];
-        setItems(newItems);
-    };
+  const moveQuestion = (index: number, direction: "up" | "down") => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === items.length - 1) return;
+    const newItems = [...items];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    [newItems[index], newItems[targetIndex]] = [
+      newItems[targetIndex],
+      newItems[index],
+    ];
+    setItems(newItems);
+  };
 
-    const handleQuestionChange = (index: number, val: string) => {
-        const newItems = [...items];
-        newItems[index].question = val;
-        setItems(newItems);
-    };
+  const handleQuestionChange = (index: number, val: string) => {
+    const newItems = [...items];
+    newItems[index].question = val;
+    setItems(newItems);
+  };
 
-    const addAnswer = (qIndex: number) => {
-        const newItems = [...items];
-        newItems[qIndex].answers.push({ id: generateId(), text: "", isCorrect: false });
-        setItems(newItems);
-    };
+  const addAnswer = (qIndex: number) => {
+    const newItems = [...items];
+    newItems[qIndex].answers.push({
+      id: generateId(),
+      text: "",
+      isCorrect: false,
+    });
+    setItems(newItems);
+  };
 
-    const removeAnswer = (qIndex: number, aIndex: number) => {
-        const newItems = [...items];
-        if (newItems[qIndex].answers.length <= 1) return;
-        newItems[qIndex].answers.splice(aIndex, 1);
-        setItems(newItems);
-    };
+  const removeAnswer = (qIndex: number, aIndex: number) => {
+    const newItems = [...items];
+    if (newItems[qIndex].answers.length <= 1) return;
+    newItems[qIndex].answers.splice(aIndex, 1);
+    setItems(newItems);
+  };
 
-    const handleAnswerChange = (qIndex: number, aIndex: number, val: string) => {
-        const newItems = [...items];
-        newItems[qIndex].answers[aIndex].text = val;
-        setItems(newItems);
-    };
+  const handleAnswerChange = (qIndex: number, aIndex: number, val: string) => {
+    const newItems = [...items];
+    newItems[qIndex].answers[aIndex].text = val;
+    setItems(newItems);
+  };
 
-    const toggleCorrect = (qIndex: number, aIndex: number) => {
-        const newItems = [...items];
-        newItems[qIndex].answers[aIndex].isCorrect = !newItems[qIndex].answers[aIndex].isCorrect;
-        setItems(newItems);
-    };
-
+  const toggleCorrect = (qIndex: number, aIndex: number) => {
+    const newItems = [...items];
+    newItems[qIndex].answers[aIndex].isCorrect =
+      !newItems[qIndex].answers[aIndex].isCorrect;
+    setItems(newItems);
+  };
 
   // --- LOGIC: UPDATE ---
   const handleUpdate = async () => {
@@ -208,21 +213,21 @@ const EditOpenTheBox = () => {
       {/* HEADER TITLE (EDIT MODE) */}
       <div className="bg-white border-b border-gray-300 p-6 mb-6">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
-            <div className="flex-1">
-                <label className="block text-xs font-bold uppercase text-gray-500 mb-2 tracking-wide">
-                    Edit Activity
-                </label>
-                <Input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-2xl font-semibold border-gray-300 focus:border-blue-500 h-12"
-                    placeholder="Enter title here..."
-                />
-            </div>
-            {/* Indikator Mode Edit (Opsional) */}
-            <div className="ml-4 px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full uppercase tracking-wider">
-                Editing Mode
-            </div>
+          <div className="flex-1">
+            <label className="block text-xs font-bold uppercase text-gray-500 mb-2 tracking-wide">
+              Edit Activity
+            </label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-2xl font-semibold border-gray-300 focus:border-blue-500 h-12"
+              placeholder="Enter title here..."
+            />
+          </div>
+          {/* Indikator Mode Edit (Opsional) */}
+          <div className="ml-4 px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full uppercase tracking-wider">
+            Editing Mode
+          </div>
         </div>
       </div>
 
@@ -234,40 +239,113 @@ const EditOpenTheBox = () => {
         */}
         <div className="space-y-6">
           {items.map((item, qIndex) => (
-            <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative group">
-                {/* TOOLBAR */}
-                <div className="absolute right-2 top-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    <button onClick={() => moveQuestion(qIndex, "up")} disabled={qIndex===0} className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-700"><ArrowUp size={16}/></button>
-                    <button onClick={() => moveQuestion(qIndex, "down")} disabled={qIndex===items.length-1} className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-700"><ArrowDown size={16}/></button>
-                    <button onClick={() => duplicateQuestion(qIndex)} className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600"><Copy size={16}/></button>
-                    <button onClick={() => removeQuestion(qIndex)} disabled={items.length<=1} className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-red-600"><Trash2 size={16}/></button>
+            <div
+              key={item.id}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative group"
+            >
+              {/* TOOLBAR */}
+              <div className="absolute right-2 top-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <button
+                  onClick={() => moveQuestion(qIndex, "up")}
+                  disabled={qIndex === 0}
+                  className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-700"
+                >
+                  <ArrowUp size={16} />
+                </button>
+                <button
+                  onClick={() => moveQuestion(qIndex, "down")}
+                  disabled={qIndex === items.length - 1}
+                  className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-700"
+                >
+                  <ArrowDown size={16} />
+                </button>
+                <button
+                  onClick={() => duplicateQuestion(qIndex)}
+                  className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600"
+                >
+                  <Copy size={16} />
+                </button>
+                <button
+                  onClick={() => removeQuestion(qIndex)}
+                  disabled={items.length <= 1}
+                  className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-red-600"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              {/* CONTENT */}
+              <div className="p-6 pr-12">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="text-xl font-bold text-gray-400 pt-2">
+                    {qIndex + 1}.
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold uppercase text-gray-400 mb-1">
+                      Question
+                    </label>
+                    <Input
+                      value={item.question}
+                      onChange={(e) =>
+                        handleQuestionChange(qIndex, e.target.value)
+                      }
+                      className="pr-20 py-5 text-lg"
+                      placeholder="Type your question..."
+                    />
+                  </div>
                 </div>
-                {/* CONTENT */}
-                <div className="p-6 pr-12">
-                    <div className="flex items-start gap-4 mb-6">
-                        <div className="text-xl font-bold text-gray-400 min-w-[24px] pt-2">{qIndex+1}.</div>
-                        <div className="flex-1">
-                            <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Question</label>
-                            <Input value={item.question} onChange={(e)=>handleQuestionChange(qIndex, e.target.value)} className="pr-20 py-5 text-lg" placeholder="Type your question..." />
+                <div className="pl-10">
+                  <label className="block text-xs font-bold uppercase text-gray-400 mb-2">
+                    Answers
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                    {item.answers.map((ans, aIndex) => (
+                      <div
+                        key={ans.id}
+                        className="flex items-center gap-2 group/answer"
+                      >
+                        <span className="text-sm font-bold text-gray-400 w-4">
+                          {String.fromCharCode(97 + aIndex)}
+                        </span>
+                        <button
+                          onClick={() => toggleCorrect(qIndex, aIndex)}
+                          className={`flex items-center justify-center w-8 h-8 rounded border transition-colors ${ans.isCorrect ? "bg-green-100 border-green-500 text-green-600" : "bg-white border-gray-300 text-gray-300 hover:border-gray-400 hover:text-gray-400"}`}
+                        >
+                          {ans.isCorrect ? (
+                            <Check size={18} />
+                          ) : (
+                            <X size={18} />
+                          )}
+                        </button>
+                        <div className="flex-1 relative">
+                          <Input
+                            value={ans.text}
+                            onChange={(e) =>
+                              handleAnswerChange(qIndex, aIndex, e.target.value)
+                            }
+                            className="pr-8"
+                          />
+                          {item.answers.length > 1 && (
+                            <button
+                              onClick={() => removeAnswer(qIndex, aIndex)}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500 opacity-0 group-hover/answer:opacity-100"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
                         </div>
-                    </div>
-                    <div className="pl-10">
-                        <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Answers</label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-                            {item.answers.map((ans, aIndex)=>(
-                                <div key={ans.id} className="flex items-center gap-2 group/answer">
-                                    <span className="text-sm font-bold text-gray-400 w-4">{String.fromCharCode(97+aIndex)}</span>
-                                    <button onClick={()=>toggleCorrect(qIndex, aIndex)} className={`flex items-center justify-center w-8 h-8 rounded border transition-colors ${ans.isCorrect ? "bg-green-100 border-green-500 text-green-600" : "bg-white border-gray-300 text-gray-300 hover:border-gray-400 hover:text-gray-400"}`}>{ans.isCorrect?<Check size={18}/>:<X size={18}/>}</button>
-                                    <div className="flex-1 relative">
-                                        <Input value={ans.text} onChange={(e)=>handleAnswerChange(qIndex, aIndex, e.target.value)} className="pr-8" />
-                                        {item.answers.length > 1 && <button onClick={()=>removeAnswer(qIndex, aIndex)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500 opacity-0 group-hover/answer:opacity-100"><X size={14}/></button>}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="mt-3 ml-6 md:ml-0"><button onClick={()=>addAnswer(qIndex)} className="text-sm font-semibold text-blue-500 hover:text-blue-700 flex items-center gap-1 py-1 px-2 rounded hover:bg-blue-50"><Plus size={16}/> Add answer</button></div>
-                    </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 ml-6 md:ml-0">
+                    <button
+                      onClick={() => addAnswer(qIndex)}
+                      className="text-sm font-semibold text-blue-500 hover:text-blue-700 flex items-center gap-1 py-1 px-2 rounded hover:bg-blue-50"
+                    >
+                      <Plus size={16} /> Add answer
+                    </button>
+                  </div>
                 </div>
+              </div>
             </div>
           ))}
         </div>
