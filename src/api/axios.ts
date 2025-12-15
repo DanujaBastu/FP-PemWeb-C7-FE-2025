@@ -6,25 +6,29 @@ const api: AxiosInstance = axios.create({
   timeout: 10000,
 });
 
-api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().token;
-    const url = config.url || "";
-    const isPublicRequest = [
-      "/api/game", // list games (public, optional auth)
-      "/api/game/template", // templates are public
-      "/play/public", // public play endpoints
-      "/leaderboard",
-      "/check",
-    ].some((p) => url.includes(p));
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  const url = config.url || "";
+  const method = (config.method || "get").toLowerCase();
 
-    if (!isPublicRequest && token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (err) => Promise.reject(err),
-);
+  const publicPaths = [
+    "/api/game/template",
+    "/play/public",
+    "/leaderboard",
+    "/check",
+  ];
+
+  // ✅ hanya GET list game yang dianggap public
+  const isPublicRequest =
+    (method === "get" && url.includes("/api/game")) ||
+    publicPaths.some((p) => url.includes(p));
+
+  if (!isPublicRequest && token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 api.interceptors.response.use(
   (res) => res,
