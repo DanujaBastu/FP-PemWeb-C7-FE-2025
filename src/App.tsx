@@ -15,9 +15,16 @@ import ProtectedRoute from "./routes/ProtectedRoutes";
 import CreateAnagram from "./pages/Anagram/CreateAnagram";
 import PlayAnagram from "./pages/Anagram/PlayAnagram";
 import EditAnagram from "./pages/Anagram/EditAnagram";
+import PlayUnjumble from "./pages/unjumble/PlayUnjumble";
+import CreateUnjumble from "./pages/unjumble/CreateUnjumble";
+import EditUnjumble from "./pages/unjumble/EditUnjumble";
+
 import MazeChase from "./pages/maze-chase/MazeChase";
 import CreateMazeChase from "./pages/maze-chase/CreateMazeChase";
 import EditMazeChase from "./pages/maze-chase/EditMazeChase";
+import CreateTypeSpeed from "./pages/type-speed/CreateTypeSpeed";
+import EditTypeSpeed from "./pages/type-speed/EditTypeSpeed";
+import TypeSpeed from "./pages/type-speed/TypeSpeed";
 
 import OpenTheBoxGame from "./pages/open-the-box";
 import CreateOpenTheBox from "./pages/open-the-box/createOpenTheBox";
@@ -26,6 +33,11 @@ import EditOpenTheBox from "./pages/open-the-box/editOpenTheBox";
 // 📌 TAMBAHAN 1: Import Komponen Game Pair or No Pair
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
+import HangmanGame from "./pages/hangman";
+import CreateHangmanTemplate from "./pages/hangman/create";
+import CreateTrueOrFalse from "./pages/true-or-false/CreateTrueOrFalse";
+import EditTrueOrFalse from "./pages/true-or-false/EditTrueOrFalse";
+import PlayTrueOrFalse from "./pages/true-or-false/TrueOrFalse";
 import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
 
 import CreateSlidingPuzzle from "./pages/sliding-puzzle/CreateSlidingPuzzle";
@@ -53,6 +65,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
+        <Route path="/unjumble/play/:id" element={<PlayUnjumble />} />
         <Route path="/open-the-box/play/:id" element={<OpenTheBoxGame />} />
 
         <Route path="/create-open-the-box" element={<CreateOpenTheBox />} />
@@ -61,18 +74,24 @@ function App() {
         <Route path="/maze-chase/play/:id" element={<MazeChase />} />
         <Route path="/flip-tiles/play/:id" element={<FlipTiles />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />
+        <Route path="/type-speed/play/:id" element={<TypeSpeed />} />
         <Route path="/anagram/play/:id" element={<PlayAnagram />} />
+        <Route path="/hangman/play/:id" element={<HangmanGame />} />
         <Route
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
         />
-        <Route path="/whack-a-mole/play/:gameId" element={<WhackAMoleGame />} />
+        <Route path="/true-or-false/play/:id" element={<PlayTrueOrFalse />} />
         <Route
           path="/sliding-puzzle/play/:id"
           element={<PlaySlidingPuzzle />}
         />
 
         <Route element={<ProtectedRoute />}>
+          <Route
+            path="/whack-a-mole/play/:gameId"
+            element={<WhackAMoleGame />}
+          />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/my-projects" element={<MyProjectsPage />} />
           <Route path="/create-projects" element={<CreateProject />} />
@@ -91,10 +110,13 @@ function App() {
             path="/create-pair-or-no-pair"
             element={<CreatePairOrNoPair />}
           />
+          <Route path="/create-hangman" element={<CreateHangmanTemplate />} />
+          <Route path="/hangman/edit/:id" element={<CreateHangmanTemplate />} />
           <Route path="/create-whack-a-mole" element={<CreateWhackAMole />} />
           <Route path="/whack-a-mole/edit/:id" element={<EditWhackAMole />} />
           <Route path="/create-maze-chase" element={<CreateMazeChase />} />
           <Route path="/create-anagram" element={<CreateAnagram />} />
+          <Route path="/create-type-speed" element={<CreateTypeSpeed />} />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
           <Route path="/flip-tiles/edit/:id" element={<EditFlipTiles />} />
           <Route
@@ -111,6 +133,12 @@ function App() {
           />
           <Route path="/maze-chase/edit/:id" element={<EditMazeChase />} />
           <Route path="/anagram/edit/:id" element={<EditAnagram />} />
+
+          <Route path="/create-unjumble" element={<CreateUnjumble />} />
+          <Route path="/unjumble/edit/:id" element={<EditUnjumble />} />
+
+          <Route path="/create-true-or-false" element={<CreateTrueOrFalse />} />
+          <Route path="/true-or-false/edit/:id" element={<EditTrueOrFalse />} />
           <Route
             path="/create-sliding-puzzle"
             element={<CreateSlidingPuzzle />}
@@ -119,6 +147,7 @@ function App() {
             path="/sliding-puzzle/edit/:id"
             element={<EditSlidingPuzzle />}
           />
+          <Route path="/type-speed/edit/:id" element={<EditTypeSpeed />} />
           <Route element={<ProtectedRoute />}>
             {/* ...route lain... */}
             <Route path="/open-the-box/edit/:id" element={<EditOpenTheBox />} />
